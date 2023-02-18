@@ -1,0 +1,131 @@
+# POST http://localhost:5000/editprofile
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNDkxYTAzYWQ0NDljNjk2ZTQ1NjE3In0sImlhdCI6MTY3NjAwOTgxMCwiZXhwIjoxNjc2MDQ1ODEwfQ.9qAJ4q5vka8zcB_TMHY0rEyLJmSo_3RAPjFIwE3RmnY
+
+# {
+#     "_id": "63e5efc89598522f6738ca3b",
+#     "name": {"fname": "Sarthak", "lname": "Chittawar"},
+#     "uname": "zardag",
+#     "email": "sarthaks@gmail.com",
+#     "age": 19,
+#     "contact": 9686719245
+# }
+
+# GET http://localhost:5000/getusers
+
+# POST http://localhost:5000/deletefollowers
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjExMzc3MiwiZXhwIjoxNjc2MTQ5NzcyfQ.OKUCR31ZUdYiDcPgGp6w0nBknHQEmnNlp_4BfKPqRNU
+
+# {
+#     "uname": "zardag",
+#     "funame": "zarda"
+# }
+
+# POST http://localhost:5000/getfollowers
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjExMzc3MiwiZXhwIjoxNjc2MTQ5NzcyfQ.OKUCR31ZUdYiDcPgGp6w0nBknHQEmnNlp_4BfKPqRNU
+
+# {
+#     "uname": "zardag"
+# }
+
+# POST http://localhost:5000/addfollower
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjQ5MDM5NywiZXhwIjoxNjc2NTI2Mzk3fQ.s8EfoOJH1n90mof0FLD6ylH1A5TFvBf4gVw20GPZV4A
+
+# {
+#     "uname": "zardag",
+#     "funame": "zarda"
+# }
+
+# POST http://localhost:5000/addfollowing
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjQ5MDM5NywiZXhwIjoxNjc2NTI2Mzk3fQ.s8EfoOJH1n90mof0FLD6ylH1A5TFvBf4gVw20GPZV4A
+
+# {
+#     "uname": "zardag",
+#     "funame": "zarda"
+# }
+
+POST http://localhost:5000/subgreddiits/request
+Content-Type: application/json
+x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjU0MDYyNSwiZXhwIjoxNjc2NTc2NjI1fQ.a9jUPP8UPoR3kFzBfiz5K_W32raLy_IqXEwAYS9J1Tg
+
+{
+    "uname": "zardag",
+    "title": "f1"
+}
+
+# POST http://localhost:5000/subgreddiits/acceptrequest
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjM5NTY3MCwiZXhwIjoxNjc2NDMxNjcwfQ.-L2X2juBbxlVgUG7lDZ-jFUI0gRNHTusxn_XDyfBZIE
+
+# {
+#     "uname": "zardag",
+#     "title": "F3"
+# }
+
+# POST http://localhost:5000/createsubgreddiit
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjIzMzA0MywiZXhwIjoxNjc2MjY5MDQzfQ.d9gXD76JBbajbQfOzB9YfwWtAYllCg0MGBJONIxP-7c
+
+# {
+#     "title": "f2",
+#     "desc": "formula 2",
+#     "banned": "max, hamilton",
+#     "mod": "zardag"
+# }
+
+# POST http://localhost:5000/getsubgreddiits
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjIzMzA0MywiZXhwIjoxNjc2MjY5MDQzfQ.d9gXD76JBbajbQfOzB9YfwWtAYllCg0MGBJONIxP-7c
+
+# {
+#     "mod": "zardag"
+# }
+
+# POST http://localhost:5000/idtouname
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNDkxYTAzYWQ0NDljNjk2ZTQ1NjE3In0sImlhdCI6MTY3NjAwOTgxMCwiZXhwIjoxNjc2MDQ1ODEwfQ.9qAJ4q5vka8zcB_TMHY0rEyLJmSo_3RAPjFIwE3RmnY
+
+# {
+#     "_id": "63e63767769eea8879a66f84",
+#     "from": "63e5eddea02b1f27b2820c71",
+#     "to": "63e5efc89598522f6738ca3b",
+#     "__v": 0
+# }
+
+
+# PUT http://localhost:5000/1
+# Content-Type: application/json
+
+# {
+#     "name": "newname"
+# }
+
+# POST http://localhost:5000/login
+# Content-Type: application/json
+
+# {
+#     "uname": "zardag",
+#     "passwd": "xyzabc"
+# }
+
+# POST http://localhost:5000/deletesubgreddiit
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjI3OTgwOSwiZXhwIjoxNjc2MzE1ODA5fQ.kXI358pnO-eiJunvO3e6kYBo1iP_NV88PUJtFShOZ28
+
+# {
+#     "mod": "zardag",
+#     "title": "f1"
+# }
+
+# POST http://localhost:5000/subgreddiits/search
+# Content-Type: application/json
+# x-auth-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjNlNWVmYzg5NTk4NTIyZjY3MzhjYTNiIn0sImlhdCI6MTY3NjUyNzE5OSwiZXhwIjoxNjc2NTYzMTk5fQ.sIFDlR0IQqQtEMEFiowVj1pYmR-SC0a-G20VglTZTyM
+
+# {
+#     "search": "F1",
+#     "uname": "zarda"
+# }
