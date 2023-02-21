@@ -1,6 +1,6 @@
 import Login from "./Login";
 import SignUp from "./SignUp";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Assignroute ({loginstatus, setLoginStatus, creds, setCreds, jwt, setJWT}) {
@@ -9,11 +9,18 @@ function Assignroute ({loginstatus, setLoginStatus, creds, setCreds, jwt, setJWT
     const navigate = useNavigate();
     console.log("loginstatus " + loginstatus);
 
-    if (loginstatus === 1)
-    {
-        console.log("set "+loginstatus)
-        navigate("/profile");
-    }
+    // if (loginstatus === 1)
+    // {
+    //     console.log("set "+loginstatus)
+    //     navigate("/profile");
+    // }
+    useEffect(() => {
+        if (loginstatus === 1)
+        {
+            console.log("set "+loginstatus)
+            navigate("/profile");
+        }
+    }, [loginstatus])
 
     if (signFlag === 0)
     {

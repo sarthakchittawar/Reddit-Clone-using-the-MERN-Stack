@@ -159,7 +159,7 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
         <>
             <Box justifyContent="space-between" sx={{display: 'flex', flexDirection: 'row', alignItems: 'left', p: 1, backgroundColor: '#ba000d'}}>
                 <Avatar variant='rounded' src={logo} sx={{width: 50, height: 50, '&:hover': {cursor: 'pointer'}}} onClick={() => navigate("/dashboard")} />
-                <IconButton sx={{display: 'flex', flexDirection: 'column', ml: 100}} onClick={() => navigate("/profile")}>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/profile")}>
                     <AccountBoxIcon sx={{fontSize: 40, color: 'yellow'}}/>
                     {/* <Typography variant="h5">My Profile</Typography> */}
                 </IconButton>

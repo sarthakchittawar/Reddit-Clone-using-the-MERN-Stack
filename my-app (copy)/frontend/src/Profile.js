@@ -31,7 +31,10 @@ function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
 
     useEffect(() => {
         if (loginstatus === -2 || loginstatus === -3)
+        {
+            console.log("going back")
             navigate("/");
+        }
     }, [loginstatus])
     
     if (loginstatus === 1 && buttonFlag === 1)
@@ -202,11 +205,9 @@ function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
                 "x-auth-token": localStorage.getItem("jwt")
         }})
         const data = await user.json()
-        console.log("here")
         array.push(data.uname);
         setFollowing(array);
         setFollowingList(following.map(following => <li>{following}<Button onClick={() => deleteFollowing(following)} variant='contained'>X</Button></li>))
-        console.log(following)
         }
         catch (error) {
             console.error(error);
@@ -279,7 +280,7 @@ function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
         <>
             <Box justifyContent="space-between" sx={{display: 'flex', flexDirection: 'row', alignItems: 'left', p: 1, backgroundColor: '#ba000d'}}>
                 <Avatar variant='rounded' src={logo} sx={{width: 50, height: 50, '&:hover': {cursor: 'pointer'}}} onClick={() => navigate("/dashboard")} />
-                <IconButton sx={{display: 'flex', flexDirection: 'column', ml: 100}} onClick={() => navigate("/profile")}>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/profile")}>
                     <AccountBoxIcon sx={{fontSize: 40, color: 'yellow'}}/>
                     {/* <Typography variant="h5">My Profile</Typography> */}
                 </IconButton>

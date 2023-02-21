@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, Button, Card, CardContent, IconButton, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Button, Card, CardContent, IconButton, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -15,6 +15,9 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     const [joinedprintlist, setJoinedPrintList] = useState([]);
     const [notjoinedprintlist, setNotJoinedPrintList] = useState([]);
     const [leaveflag, setLeaveFlag] = useState(0)
+    const [errorstate, setErrorState] = useState(0)
+    const [errortext, setErrorText] = useState("Error 500");
+    const [errorsubg, setErrorSubg] = useState("")
 
     const navigate = useNavigate();
     
@@ -76,7 +79,7 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
 
     const leaveSubGreddiit = async (title) => {
         try {
-        const search = await fetch("http://localhost:5000/subgreddiits/leave", {
+        await fetch("http://localhost:5000/subgreddiits/leave", {
             method: 'POST',
             body: JSON.stringify({'title': title, 'uname': creds.uname}),
             headers: {
@@ -90,6 +93,10 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
         }
     }
 
+    const viewSubGreddiit = (title) => {
+        navigate(`/subgreddiits/${title}`);
+    }
+
     const joinSubGreddiit = async (title) => {
         try {
         const request = await fetch("http://localhost:5000/subgreddiits/request", {
@@ -100,8 +107,21 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             'x-auth-token': localStorage.getItem("jwt")
             }
         })
-        if (request.ok) console.log("Requested to join");
-        else console.log("Can't request to join")
+        const arr = await request.json()
+        if (request.ok){
+            console.log("Requested to join");
+            setErrorState(0)
+            setErrorText("")
+            setErrorSubg("")
+        }
+        else
+        {
+            console.log("Can't request to join")
+            setErrorState(1)
+            console.log(arr.error)
+            setErrorText(arr.error)
+            setErrorSubg(title)
+        }
 
         } catch (error) {
         console.error(error);
@@ -137,7 +157,7 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
                         <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
                     </CardContent>
                     <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave</Button>
-                    {/* <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View</Button> */}
+                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button>
                 </Card>
             )))
     }, [joinedlist])
@@ -153,17 +173,18 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
                         <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
                         <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
                     </CardContent>
-                    <Button onClick={() => {joinSubGreddiit(subg.title)}}>Request to Join</Button>
+                    <Button onClick={() => {setErrorState(0);setErrorText("");setErrorSubg("");joinSubGreddiit(subg.title)}}>Request to Join</Button>
                     {/* <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button> */}
+                    {(errorstate === 1 && errorsubg === subg.title) ? <Alert onClose={() => {setErrorState(0); setErrorText("");}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
                 </Card>
             )))
-    }, [notjoinedlist])
+    }, [notjoinedlist, errorstate])
 
     return (
         <>
             <Box justifyContent="space-between" sx={{display: 'flex', flexDirection: 'row', alignItems: 'left', p: 1, backgroundColor: '#ba000d'}}>
                 <Avatar variant='rounded' src={logo} sx={{width: 50, height: 50, '&:hover': {cursor: 'pointer'}}} onClick={() => navigate("/dashboard")} />
-                <IconButton sx={{display: 'flex', flexDirection: 'column', ml: 100}} onClick={() => navigate("/profile")}>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/profile")}>
                     <AccountBoxIcon sx={{fontSize: 40, color: 'yellow'}}/>
                     {/* <Typography variant="h5">My Profile</Typography> */}
                 </IconButton>

@@ -95,7 +95,9 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 }
             })
             if (!check.ok) console.log("Could not accept request!")
-            getusers(title);
+            await getusers(title);
+            var index = requests.indexOf(user)
+            requests.splice(index, 1)
         
             } catch (error) {
             console.error(error);
@@ -113,7 +115,9 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 }
             })
             if (!check.ok) console.log("Could not reject request!")
-            getusers(title);
+            await getusers(title);
+            var index = requests.indexOf(user)
+            requests.splice(index, 1)
         
             } catch (error) {
             console.error(error);
@@ -173,6 +177,7 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     }, [users])
 
     useEffect(() => {
+        console.log(requests)
         if (Array.isArray(requests))
             setRequestsList((requests).map((user) => <li>{user}<Button color='success' variant='contained' onClick={() => acceptRequest(user)}>Accept</Button><Button color='warning' variant='contained' onClick={() => rejectRequest(user)}>Reject</Button></li>))
     }, [requests])
@@ -187,7 +192,7 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
         <>
             <Box justifyContent="space-between" sx={{display: 'flex', flexDirection: 'row', alignItems: 'left', p: 1, backgroundColor: '#ba000d'}}>
                 <Avatar variant='rounded' src={logo} sx={{width: 50, height: 50, '&:hover': {cursor: 'pointer'}}} onClick={() => navigate("/dashboard")} />
-                <IconButton sx={{display: 'flex', flexDirection: 'column', ml: 100}} onClick={() => navigate("/profile")}>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/profile")}>
                     <AccountBoxIcon sx={{fontSize: 40, color: 'yellow'}}/>
                 </IconButton>
                 <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/mysubgreddiits")}>

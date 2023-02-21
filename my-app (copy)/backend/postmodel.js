@@ -14,11 +14,11 @@ const PostSchema = new mongoose.Schema({
         required: true
     },
     upvotes: {
-        type: Number,
+        type: Array,
         required: true
     },
     downvotes: {
-        type: Number,
+        type: Array,
         required: true
     }
 });
