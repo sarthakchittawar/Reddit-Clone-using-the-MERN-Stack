@@ -33,6 +33,9 @@ const UserSchema = new mongoose.Schema({
     passwd: {
         type: String,
         required: true
+    },
+    savedposts: {
+        type: Array
     }
 });
 

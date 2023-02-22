@@ -9,6 +9,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import QueryStatsIcon from '@mui/icons-material/QueryStats';
 import ReportIcon from '@mui/icons-material/Report';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navState, setNavState}) {
     
@@ -201,7 +203,10 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/subgreddiits")}>
                     <RedditIcon sx={{fontSize: 40, color: 'purple'}}/>
                 </IconButton>
-                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 30, width: 80}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout</Button>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/savedposts")}>
+                    <BookmarksIcon sx={{fontSize: 40, color: 'yellow'}}/>
+                </IconButton>
+                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 40, width: 100}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout<LogoutIcon/></Button>
             </Box>
             <Box sx={{display: 'flex', flexDirection: 'column', mt: 5, alignItems: 'center'}}>
                 <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>

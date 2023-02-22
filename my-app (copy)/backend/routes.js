@@ -2,6 +2,7 @@ const express = require("express");
 const userModel = require("./usermodel");
 const followModel = require("./followmodel");
 const postModel = require("./postmodel")
+const commentModel = require("./commentmodel")
 const middleware = require("./middleware");
 const app = express();
 const bcrypt = require("bcryptjs");
@@ -10,7 +11,7 @@ const SubGreddiit = require("./subgreddiitmodel");
 app.post("/getfollowers", middleware, async (req, res) => {
 
   try {
-    const id = await userModel.findOne({uname: req.body.uname});
+    const id = await userModel.findOne({_id: req.user.id});
     if (!id) return res.status(401).send({error: "No such uname"});
 
     const followers = await followModel.find({to: id._id});
@@ -25,7 +26,7 @@ app.post("/getfollowers", middleware, async (req, res) => {
 app.post("/getfollowing", middleware, async (req, res) => {
 
   try {
-    const id = await userModel.findOne({uname: req.body.uname});
+    const id = await userModel.findOne({_id: req.user.id});
     if (!id) return res.status(401).send({error: "No such uname"});
 
     const following = await followModel.find({from: id._id});
@@ -69,7 +70,7 @@ app.post("/addfollower", middleware, async (req, res) => {
 
   try {
     const follower = await userModel.findOne({uname: req.body.funame});
-    const user = await userModel.findOne({uname: req.body.uname});
+    const user = await userModel.findOne({_id: req.user.id});
     const find = await followModel.findOne({from: follower._id, to: user._id});
 
     if (find)
@@ -88,7 +89,7 @@ app.post("/addfollowing", middleware, async (req, res) => {
 
   try {
     const following = await userModel.findOne({uname: req.body.funame});
-    const user = await userModel.findOne({uname: req.body.uname});
+    const user = await userModel.findOne({_id: req.user.id});
     const find = await followModel.findOne({from: user._id, to: following._id});
 
     if (user.uname === following.uname) return res.status(401).send({error: "Can't follow yourself"});
@@ -109,7 +110,7 @@ app.post("/deletefollower", middleware, async (req, res) => {
 
   try {
     const fid = await userModel.findOne({uname: req.body.funame});
-    const uid = await userModel.findOne({uname: req.body.uname});
+    const uid = await userModel.findOne({_id: req.user.id});
     if (!fid || !uid) return res.status(401).send({error: "No such uname"});
 
     const follow = await followModel.deleteOne({from: fid._id, to: uid._id})
@@ -125,7 +126,7 @@ app.post("/deletefollowing", middleware, async (req, res) => {
 
   try {
     const fid = await userModel.findOne({uname: req.body.funame});
-    const uid = await userModel.findOne({uname: req.body.uname});
+    const uid = await userModel.findOne({_id: req.user.id});
     if (!fid || !uid) return res.status(401).send({error: "No such uname"});
 
     const follow = await followModel.deleteOne({from: uid._id, to: fid._id})
@@ -198,7 +199,7 @@ app.get("/getusers", async (req, res) => {
   }
 });
 
-// verify that ID is yours
+// verify that ID is yours everywhere
 app.post("/editprofile", middleware, async (req, res) => {
     
   try {
@@ -212,7 +213,7 @@ app.post("/editprofile", middleware, async (req, res) => {
         return res.status(401).send({error: "Email ID already taken!"});
     
       res.send(user);
-      const olduser = await userModel.findOne({_id: req.body._id})
+      const olduser = await userModel.findOne({_id: req.user.id})
       await olduser.updateOne(user);
   }
   catch (error) {
@@ -225,7 +226,7 @@ app.post("/createsubgreddiit", middleware, async (req, res) => {
   try {
       const subg = new SubGreddiit(req.body);
       const f = await SubGreddiit.findOne({title: req.body.title})
-      const id = await userModel.findOne({uname: req.body.mod})
+      const id = await userModel.findOne({_id: req.user.id})
       if (f)
         return res.status(401).send({error: "A SubGreddiit with this title already exists!"});
       if (!id)
@@ -256,7 +257,7 @@ app.post("/createsubgreddiit", middleware, async (req, res) => {
 app.post("/getsubgreddiits", middleware, async (req, res) => {
     
   try {
-      const id = await userModel.findOne({uname: req.body.mod})
+      const id = await userModel.findOne({_id: req.user.id})
       
       if (!id) return res.status(401).send({error: "No such user"});
 
@@ -276,7 +277,7 @@ app.post("/getsubgreddiits", middleware, async (req, res) => {
 app.post("/deletesubgreddiit", middleware, async (req, res) => {
 
   try {
-    const uid = await userModel.findOne({uname: req.body.mod});
+    const uid = await userModel.findOne({_id: req.user.id});
     const deletion = await SubGreddiit.deleteOne({mod: uid._id, title: req.body.title})
     
     if (!deletion) return res.status(401).send({error: "No such SubGreddiit"});
@@ -288,6 +289,8 @@ app.post("/deletesubgreddiit", middleware, async (req, res) => {
     return;
   }
 });
+
+// check
 
 app.post("/subgreddiits/check", middleware, async (req, res) => {
 
@@ -309,7 +312,7 @@ app.post("/subgreddiits/checkjoin", middleware, async (req, res) => {
 
   try {
     const check = await SubGreddiit.findOne({title: req.body.title})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
     if (!id) return res.status(401).send({error: "No such User"});
@@ -327,7 +330,7 @@ app.post("/subgreddiits/upvotepost", middleware, async (req, res) => {
 
   try {
     const post = await postModel.findOne({_id: req.body.postid})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
     
     if (!post) return res.status(401).send({error: "No such Post"});
     if (!id) return res.status(401).send({error: "No such User"});
@@ -358,7 +361,7 @@ app.post("/subgreddiits/downvotepost", middleware, async (req, res) => {
 
   try {
     const post = await postModel.findOne({_id: req.body.postid})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
     
     if (!post) return res.status(401).send({error: "No such Post"});
     if (!id) return res.status(401).send({error: "No such User"});
@@ -389,16 +392,97 @@ app.post("/subgreddiits/createpost", middleware, async (req, res) => {
 
   try {
     const check = await SubGreddiit.findOne({title: req.body.title})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
     if (!id) return res.status(401).send({error: "No such User"});
+    var flag = 0;
     
-    const post = new postModel({text: req.body.text, user: id._id, subgreddiit: check._id, upvotes: [], downvotes: []})
+    const post = new postModel({text: req.body.text, user: id._id, subgreddiit: check._id, upvotes: [id._id], downvotes: []})
+    for(var i=0; i<check.banned.length; i++)
+    {
+      var str = new RegExp(check.banned[i], 'ig')
+      var temp = post.text.replaceAll(str, "*".repeat(check.banned[i].length))
+      if (temp !== post.text) flag = 1;
+
+      post.text = temp
+    }
     check.posts.push(post._id)
     await check.updateOne(check);
-    res.send(check)
+    if (flag) res.send({error: "Your text has some banned keywords and they have been censored"})
+    else res.send({error: ""})
     await post.save();
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/savepost", middleware, async (req, res) => {
+
+  try {
+    const post = await postModel.findOne({_id: req.body.postid})
+    const id = await userModel.findOne({_id: req.user.id})
+    
+    if (!post) return res.status(401).send({error: "No such Post"});
+    if (!id) return res.status(401).send({error: "No such User"});
+
+    const index = id.savedposts.indexOf(req.body.postid)
+    if (index != -1) return res.status(401).send({error: "Post saved already"});
+    
+    id.savedposts.push(req.body.postid)
+    await id.updateOne(id);
+    res.send(id)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/unsavepost", middleware, async (req, res) => {
+
+  try {
+    const post = await postModel.findOne({_id: req.body.postid})
+    const id = await userModel.findOne({_id: req.user.id})
+    
+    if (!post) return res.status(401).send({error: "No such Post"});
+    if (!id) return res.status(401).send({error: "No such User"});
+
+    var index = id.savedposts.indexOf(req.body.postid)
+    if (index === -1) return res.status(401).send({error: "No such post"});
+    id.savedposts.splice(index, 1)
+
+    await id.updateOne(id);
+    res.send(id)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/getsavedposts", middleware, async (req, res) => {
+
+  try {
+    const id = await userModel.findOne({_id: req.user.id})
+    
+    if (!id) return res.status(401).send({error: "No such User"});
+
+    var p = []
+
+    for(var i=0; i<id.savedposts.length; i++)
+    {
+      var postid = id.savedposts[i]
+      const data = await postModel.findOne({_id: postid})
+      const newid = await userModel.findOne({_id: data.user})
+      data.user = newid.uname
+      const subg = await SubGreddiit.findOne({_id: data.subgreddiit})
+      data.subgreddiit = subg.title
+      p.push(data)
+    }
+    res.send(p)
   }
   catch (error) {
     res.status(500).send(error);
@@ -410,7 +494,7 @@ app.post("/subgreddiits/getallposts", middleware, async (req, res) => {
 
   try {
     const check = await SubGreddiit.findOne({title: req.body.title})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
     if (!id) return res.status(401).send({error: "No such User"});
@@ -425,6 +509,49 @@ app.post("/subgreddiits/getallposts", middleware, async (req, res) => {
       p.push(data)
     }
     res.send(p)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/posts/getcomments", middleware, async (req, res) => {
+
+  try {
+    const check = await postModel.findOne({_id: req.body.postid})
+    
+    if (!check) return res.status(401).send({error: "No such Post"});
+
+    var p = []
+    for(var i=0; i<check.comments.length; i++)
+    {
+      const comment = await commentModel.findOne({_id: check.comments[i]})
+      const data = await userModel.findOne({_id: comment.user})
+      comment.user = data.uname
+      p.push(comment)
+    }
+    res.send(p)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/posts/addcomment", middleware, async (req, res) => {
+
+  try {
+    const user = await userModel.findOne({_id: req.user.id})
+    
+    const check = await postModel.findOne({_id: req.body.postid})
+    
+    if (!check) return res.status(401).send({error: "No such Post"});
+
+    const comment = new commentModel({user: user._id, text: req.body.text, postid: req.body.postid})
+    check.comments.push(comment._id)
+    await check.updateOne(check)
+    await comment.save()
   }
   catch (error) {
     res.status(500).send(error);
@@ -471,7 +598,7 @@ app.post("/subgreddiits/getusers", async (req, res) => {
 app.post("/subgreddiits/request", middleware, async (req, res) => {
     
   try {
-      const id = await userModel.findOne({uname: req.body.uname})
+      const id = await userModel.findOne({_id: req.user.id})
       const subg = await SubGreddiit.findOne({title: req.body.title})
       if (!id)
         return res.status(401).send({error: "Username not present!"});
@@ -499,7 +626,7 @@ app.post("/subgreddiits/request", middleware, async (req, res) => {
 app.post("/subgreddiits/acceptrequest", middleware, async (req, res) => {
     
   try {
-      const subg = await SubGreddiit.findOne({title: req.body.title})
+      const subg = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
       if (!subg)
         return res.status(401).send({error: "SubGreddiit not present!"});
       const id = await userModel.findOne({uname: req.body.uname})
@@ -523,7 +650,7 @@ app.post("/subgreddiits/acceptrequest", middleware, async (req, res) => {
 app.post("/subgreddiits/rejectrequest", middleware, async (req, res) => {
     
   try {
-      const subg = await SubGreddiit.findOne({title: req.body.title})
+      const subg = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
       
       if (!subg)
         return res.status(401).send({error: "SubGreddiit not present!"});

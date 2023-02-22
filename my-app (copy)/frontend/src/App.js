@@ -8,6 +8,7 @@ import { BrowserRouter } from "react-router-dom";
 import Dashboard from './Dashboard';
 import OpenMySubGreddiit from './openmysubgreddiit';
 import OpenSubGreddiit from './opensubgreddiit';
+import SavedPosts from './savedposts';
 
 function App() {
 
@@ -33,6 +34,7 @@ function App() {
       <Route path='/subgreddiits' element={<SubGreddiits loginstatus={loginstatus} setLoginStatus={setLoginStatus} creds={creds} setCreds={setCreds}/>}/>
       <Route path='/mysubgreddiits/:title' element={<OpenMySubGreddiit loginstatus={loginstatus} setLoginStatus={setLoginStatus} creds={creds} setCreds={setCreds}/>}/>
       <Route path='/subgreddiits/:title' element={<OpenSubGreddiit loginstatus={loginstatus} setLoginStatus={setLoginStatus} creds={creds} setCreds={setCreds}/>}/>
+      <Route path='/savedposts' element={<SavedPosts loginstatus={loginstatus} setLoginStatus={setLoginStatus} creds={creds} setCreds={setCreds}/>}/>
     </Routes>
     </BrowserRouter>
   );

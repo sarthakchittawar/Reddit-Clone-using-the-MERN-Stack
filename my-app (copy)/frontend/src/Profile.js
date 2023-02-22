@@ -6,6 +6,8 @@ import logo from './logo.png'
 import avatar from './avatar.png'
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import RedditIcon from '@mui/icons-material/Reddit';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
     const [buttonFlag, setButtonFlag] = useState(0);
@@ -122,11 +124,11 @@ function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
         {
           if (!isNaN(cred.target.value))
           {
-            setCreds({...creds, [cred.target.name]: cred.target.value})
+            setCreds({...creds, [cred.target.name]: cred.target.value.trim()})
           }
         }
         else
-          setCreds({...creds, [cred.target.name]: cred.target.value})
+          setCreds({...creds, [cred.target.name]: cred.target.value.trim()})
     }
 
     const checkEmpty = () => {
@@ -292,7 +294,10 @@ function Profile({loginstatus, setLoginStatus, creds, setCreds}) {
                     <RedditIcon sx={{fontSize: 40, color: 'purple'}}/>
                     {/* <Typography variant="h5">All SubGreddiits</Typography> */}
                 </IconButton>
-                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 30, width: 80}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout</Button>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/savedposts")}>
+                    <BookmarksIcon sx={{fontSize: 40, color: 'yellow'}}/>
+                </IconButton>
+                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 40, width: 100}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout<LogoutIcon/></Button>
             </Box>
             <Box sx={{display: 'flex', flexDirection: 'column', mt: 5, alignItems: 'center'}}>
                 <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>

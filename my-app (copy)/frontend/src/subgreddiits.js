@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import RedditIcon from '@mui/icons-material/Reddit';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     
@@ -156,8 +159,8 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
                         <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
                         <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
                     </CardContent>
-                    <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave</Button>
-                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button>
+                    <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave <ExitToAppIcon/></Button>
+                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View</Button>
                 </Card>
             )))
     }, [joinedlist])
@@ -196,7 +199,10 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
                     <RedditIcon sx={{fontSize: 40, color: 'purple'}}/>
                     {/* <Typography variant="h5">All SubGreddiits</Typography> */}
                 </IconButton>
-                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 30, width: 80}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout</Button>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/savedposts")}>
+                    <BookmarksIcon sx={{fontSize: 40, color: 'yellow'}}/>
+                </IconButton>
+                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 40, width: 100}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout<LogoutIcon/></Button>
             </Box>
             <Box sx={{display: 'flex', flexDirection: 'column', mt: 5, alignItems: 'center'}}>
                 <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>

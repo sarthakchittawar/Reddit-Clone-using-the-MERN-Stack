@@ -15,11 +15,13 @@ function SignUp({loginstatus, setLoginStatus, creds, setCreds, setSignFlag}) {
       {
         if (!isNaN(cred.target.value))
         {
-          setCreds({...creds, [cred.target.name]: cred.target.value})
+          setCreds({...creds, [cred.target.name]: cred.target.value.trim()})
         }
       }
       else
-        setCreds({...creds, [cred.target.name]: cred.target.value})
+      {
+        setCreds({...creds, [cred.target.name]: cred.target.value.trim()})
+      }
     }
   const correctPassword = () => {
     if (creds.passwd !== creds.passwd2 && creds.passwd.length !== 0 && creds.passwd2.length !==0)

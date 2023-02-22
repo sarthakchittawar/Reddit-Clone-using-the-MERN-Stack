@@ -20,6 +20,9 @@ const PostSchema = new mongoose.Schema({
     downvotes: {
         type: Array,
         required: true
+    },
+    comments: {
+        type: Array
     }
 });
 

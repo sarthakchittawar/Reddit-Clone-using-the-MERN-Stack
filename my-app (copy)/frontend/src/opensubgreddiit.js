@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Avatar, Button, Card, CardActions, CardContent, CardMedia, IconButton, Modal, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Backdrop, Button, Card, CardActions, CardContent, CardMedia, CircularProgress, IconButton, Modal, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import RedditIcon from '@mui/icons-material/Reddit';
 import subgimage from './subg.jpg'
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import SaveIcon from '@mui/icons-material/Save';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AddCommentIcon from '@mui/icons-material/AddComment';
+import CommentIcon from '@mui/icons-material/Comment';
 
 function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     
@@ -18,6 +26,12 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     const [errorstate, setErrorState] = useState(0)
     const [errortext, setErrorText] = useState("Error 500");
     const [errorpost, setErrorPost] = useState("")
+    const [apiflag, setAPIFlag] = useState(1)
+    const [commentflag, setCommentFlag] = useState(false);
+    const [commentlist, setCommentList] = useState([])
+    const [commenttext, setCommentText] = useState("")
+    const [commentpostid, setCommentPostID] = useState("")
+    const [commentprintlist, setCommentPrintList] = useState([])
 
     const navigate = useNavigate();
     
@@ -109,10 +123,27 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                 'x-auth-token': localStorage.getItem("jwt")
                 }
             })
-            await check.json();
+            const arr = await check.json();
+            console.log(arr.error)
     
             if (!check.ok) console.log("could not create post")
-            else getAllPosts();
+            else
+            {
+                if (arr.error !== "")
+                {
+                    setErrorState(1)
+                    setErrorText(arr.error)
+                    setErrorPost("bannedkeywords")
+                }
+                else
+                {
+                    setErrorState(0)
+                    setErrorText("")
+                    setErrorPost("")
+                }
+                setAPIFlag(1)
+                getAllPosts();
+            }
     
             } catch (error) {
             console.error(error);
@@ -133,6 +164,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
             if (!check.ok) console.log("could not get posts")
             const arr = await check.json()
             setPostList(arr);
+            setAPIFlag(0)
     
             } catch (error) {
             console.error(error);
@@ -235,8 +267,88 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
             }
     }
 
+    const savePost = async (postid) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/savepost", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid, 'uname': creds.uname}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+    
+            const arr = await check.json()
+            if (!check.ok){
+                console.log("could not save")
+                setErrorState(1)
+                setErrorText(arr.error)
+                setErrorPost(postid)
+            }
+            else
+            {
+                console.log("saved post")
+                setErrorState(0)
+                setErrorText("")
+                setErrorPost("")
+            }
+            getAllPosts()
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const viewComments = async (postid) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/getcomments", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+            console.log("hi")
+    
+            if (!check.ok) console.log("could not get comments")
+            setCommentPostID(postid)
+            const arr = await check.json()
+            console.log(arr)
+            setCommentList(arr);
+            setCommentFlag(true);
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const AddComment = async (postid, text) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/addcomment", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid, 'text': text}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+    
+            if (!check.ok) console.log("could not add comment")
+            viewComments(postid)
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+
     const changeHandler = (val) => {
         setBodyText(val.target.value)
+    }
+
+    const commentChange = (val) => {
+        setCommentText(val.target.value)
     }
 
     useEffect(() => {
@@ -246,6 +358,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     useEffect(() => {
         if (creds.uname!=="" && title)
         {
+            setAPIFlag(1)
             checkSubG(title)
             checkJoin(title)
         }
@@ -257,28 +370,36 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     }, [currentsubg])
 
     useEffect(() => {
+        console.log(commentlist)
+        if (Array.isArray(commentlist))
+        {
+            setCommentPrintList(commentlist.map((comment) => (
+                <li>
+                    <Typography sx={{ml: 5}} variant="body1">{comment.text}</Typography>
+                    <Typography sx={{ml: 5}} variant="body2">Posted By: {comment.user}</Typography>
+                    <br></br>
+                </li>
+            )))
+        }
+    }, [commentlist])
+
+    useEffect(() => {
         if (Array.isArray(postlist))
             setPostPrintList(postlist.map((post) => (
                 <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
                     <CardContent>
-                        <Typography variant="h3">{post.text}</Typography>
-                        <Typography variant="h5">Posted By: {post.user}</Typography>
-                        <Typography variant="h5">Upvotes: {post.upvotes.length}</Typography>
-                        <Typography variant="h5">Downvotes: {post.downvotes.length}</Typography>
-                        {/* <Typography variant="h5">Description: {subg.desc}</Typography>
-                        <Typography variant="h6">Followers: {subg.followers.length}</Typography>
-                        <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
-                        <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography> */}
+                        <Typography variant='body1' style={{whiteSpace: 'break-spaces'}}>{post.text}</Typography>
+                        <br></br>
+                        <Typography variant='body2'>Posted By: {post.user}</Typography>
                     </CardContent>
                     <CardActions>
-                        <Button onClick={() => {upvotePost(post._id)}}>Upvote</Button>
-                        <Button onClick={() => {downvotePost(post._id)}}>Downvote</Button>
-                        <Button disabled={post.user === creds.uname} onClick={() => {followUser(post._id, post.user)}}>Follow User</Button>
-                        <Button onClick={() => {}}>Save Post</Button>
+                        <Button onClick={() => {setAPIFlag(1); upvotePost(post._id)}}><ArrowUpwardIcon/>{post.upvotes.length}</Button>
+                        <Button onClick={() => {setAPIFlag(1); downvotePost(post._id)}}><ArrowDownwardIcon/>{post.downvotes.length}</Button>
+                        <Button onClick={() => {viewComments(post._id)}}><CommentIcon/>{post.comments.length}</Button>
+                        <Button disabled={post.user === creds.uname} onClick={() => {setAPIFlag(1); followUser(post._id, post.user)}}><PersonAddIcon/></Button>
+                        <Button onClick={() => {setAPIFlag(1); savePost(post._id)}}><SaveIcon/></Button>
                     </CardActions>
-                    {/* <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave</Button>
-                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button> */}
-                    {(errorstate === 1 && errorpost === post._id) ? <Alert onClose={() => {setErrorState(0); setErrorText(""); getAllPosts()}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
+                    {(errorstate === 1 && errorpost === post._id) ? <Alert onClose={() => {setErrorState(0); setAPIFlag(1); setErrorText(""); getAllPosts()}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
                 </Card>
             )))
     }, [postlist])
@@ -289,57 +410,51 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                 <Avatar variant='rounded' src={logo} sx={{width: 50, height: 50, '&:hover': {cursor: 'pointer'}}} onClick={() => navigate("/dashboard")} />
                 <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/profile")}>
                     <AccountBoxIcon sx={{fontSize: 40, color: 'yellow'}}/>
-                    {/* <Typography variant="h5">My Profile</Typography> */}
                 </IconButton>
                 <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/mysubgreddiits")}>
                     <RedditIcon sx={{fontSize: 40, color: 'orange'}}/>
-                    {/* <Typography variant="h5">My SubGreddiits</Typography> */}
                 </IconButton>
                 <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/subgreddiits")}>
                     <RedditIcon sx={{fontSize: 40, color: 'purple'}}/>
-                    {/* <Typography variant="h5">All SubGreddiits</Typography> */}
                 </IconButton>
-                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 30, width: 80}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout</Button>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/savedposts")}>
+                    <BookmarksIcon sx={{fontSize: 40, color: 'yellow'}}/>
+                </IconButton>
+                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 40, width: 100}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout<LogoutIcon/></Button>
             </Box>
-            {/* <Box sx={{display: 'flex', flexDirection: 'column', mt: 5, alignItems: 'center'}}>
-                <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
-                    <Typography variant="h2">Welcome to Greddiit !!</Typography>
-                </Box>
-            </Box> */}
             {/* add stuff here */}
-            <Box sx={{display: 'flex', flexDirection: 'row', border: 'black', borderWidth: 1, overflow: 'hidden'}}>
+            <Box sx={{display: 'flex', flexDirection: 'row', border: 'black', borderWidth: 1}}>
                 <Box sx={{display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 1, alignItems: 'center', width: '50%'}}>
-                    {/* <Avatar src={subgimage} variant="square" style={{width: '50%', height: 716, position: 'unset'}}>
-                    <Typography variant="h2">{currentsubg.title}</Typography>
-                    <Typography variant="h4">{currentsubg.desc}</Typography>
-                    </Avatar> */}
                     <Typography variant="h2" color='black' backgroundColor='orange' sx={{borderRadius: 1, p: 0.5, mt: 1}}>Name: {currentsubg.title}</Typography>
-                    <Typography variant="h5" color='black' backgroundColor='orange' sx={{borderRadius: 1, p: 0.5, mt: 1}}>Description: {currentsubg.desc}</Typography>
+                    <Typography variant="body2" color='black' backgroundColor='orange' sx={{borderRadius: 1, p: 0.5, mt: 1}} style={{whiteSpace: 'break-spaces'}}>Description:<br></br>{currentsubg.desc}</Typography>
                     <Card style={{height: '572px', width: '100%', alignItems: 'center'}} sx={{mt: 1}}>
                         <CardMedia style={{height: '572px', width: '100%'}} component='img' image={subgimage} alt='DP'/>
-                        {/* <Typography variant="h4" position='absolute'>{currentsubg.desc}</Typography> */}
                     </Card>
                 </Box>
-                <Box sx={{display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 1, alignItems: 'center', width: '50%', overflow: 'hidden', overflowY: 'scroll'}}>
+                <Box sx={{display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 1, alignItems: 'center', width: '50%', maxHeight: '710px', overflow: 'auto'}}>
                     <Button type="submit" variant="contained" sx={{mt: 7}} onClick={() => {setPostFlag(true)}}>Add Post</Button>
                     <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center'}} open={postflag} onClose={() => {setPostFlag(false);}}>
                         <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
-                            {/* <Typography variant="h3" sx={{ml: 2}}>Form</Typography>
-                            <TextField required autoFocus name='title' label='Title' type='text' value={values.title} onChange={changeHandler} sx={{width:150}}/>
-                            <TextField required name='desc' label='Description' type='text' value={values.desc} onChange={changeHandler} sx={{ml: 2, width:150}}/>
-                            <TextField name='tags' label='Tags' type='text' value={values.tags} onChange={changeHandler} sx={{ml: 2, width:150}}/>
-                            <TextField name='banned' label='Banned Keywords' type='text' value={values.banned} onChange={changeHandler} sx={{mt: 2, width:200}}/>
-                            <Button type='submit' variant='contained' disabled={checkEmpty()} onClick={submitForm} name='submitform' sx={{mt: 3, ml: 2}}>Submit</Button>
-                            { errorState === 1 ? <Alert onClose={() => {setErrorState(0)}} variant='filled' severity='success' sx={{mt: 2}}>SubGreddiit created successfully!</Alert> : <></> }
-                            { errorState === 2 ? <Alert onClose={() => {setErrorState(0)}} variant='filled' severity='error' sx={{mt: 2}}>{errortext}</Alert> : <></> } */}
                             <Typography variant="h1" sx={{ml: 2}}>Create Post</Typography>
                             <TextField required autoFocus multiline maxRows={4} name='text' label='Text' type='text' value={bodytext} onChange={changeHandler} sx={{width: 600, height: 150, ml: 5}}/>
-                            <Button type='submit' variant='contained' disabled={(bodytext === "")} onClick={() => {createPost(title, bodytext)}} name='submitpost' sx={{mb: 2, ml: 35}}>Submit</Button>
+                            <Button type='submit' variant='contained' disabled={(bodytext === "")} onClick={() => {setPostFlag(false); createPost(title, bodytext)}} name='submitpost' sx={{mb: 2, ml: 35}}>Submit</Button>
                         </Box>
                     </Modal>
+                    {(errorstate === 1 && errorpost === "bannedkeywords") ? <Alert onClose={() => {setErrorState(0); setErrorText(""); setErrorPost("");}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
                     <ul>
                         {postprintlist}
                     </ul>
+                    <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center'}} open={commentflag} onClose={() => {setCommentFlag(false);}}>
+                        <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
+                            <Typography variant="h1" sx={{ml: 2}}>Comments</Typography>
+                            {commentprintlist}
+                            <TextField autoFocus name="comment" label='Add Comment' type='text' value={commenttext} onChange={commentChange} sx={{width: 600, height: 80, ml: 5}}/>
+                            <Button type='submit' variant='contained' disabled={(commenttext === "")} onClick={() => {AddComment(commentpostid, commenttext); setCommentFlag(0); setCommentText(""); setAPIFlag(1); getAllPosts()}} name='submitcomment' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                        </Box>
+                    </Modal>
+                    <Backdrop open={apiflag} onClose={() => setAPIFlag(0)}>
+                        <CircularProgress/>
+                    </Backdrop>
                 </Box>
             </Box>
         </>

@@ -12,7 +12,7 @@ function Login({loginstatus, setLoginStatus, creds, setCreds, setSignFlag, jwt, 
   }
 
   const changeHandler = (cred) => {
-      setCreds({...creds, [cred.target.name]: cred.target.value})
+      setCreds({...creds, [cred.target.name]: cred.target.value.trim()})
     }
   
   const loginHandler = async (e) => {

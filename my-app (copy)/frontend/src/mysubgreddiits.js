@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Avatar, Button, Card, CardContent, IconButton, Modal, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Button, Card, CardActions, CardContent, IconButton, Modal, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import RedditIcon from '@mui/icons-material/Reddit';
+import BookmarksIcon from '@mui/icons-material/Bookmarks';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState, setNavState}) {
     
@@ -135,13 +138,15 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
                 <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
                     <CardContent>
                         <Typography variant="h3">Title: {subg.title}</Typography>
-                        <Typography variant="h5">Description: {subg.desc}</Typography>
+                        <Typography variant="body1" style={{whiteSpace: 'break-spaces'}}>Description:<br/>{subg.desc}</Typography>
                         <Typography variant="h6">Followers: {subg.followers.length}</Typography>
                         <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
                         <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
                     </CardContent>
-                    <Button onClick={() => {deleteSubGreddiit(subg.title)}}>Delete SubGreddiit</Button>
-                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button>
+                    <CardActions>
+                        <Button onClick={() => {viewSubGreddiit(subg.title)}}>View</Button>
+                        <Button onClick={() => {deleteSubGreddiit(subg.title)}}><DeleteIcon/></Button>
+                    </CardActions>
                 </Card>
             )))
         }
@@ -171,7 +176,10 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
                     <RedditIcon sx={{fontSize: 40, color: 'purple'}}/>
                     {/* <Typography variant="h5">All SubGreddiits</Typography> */}
                 </IconButton>
-                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 30, width: 80}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout</Button>
+                <IconButton sx={{display: 'flex', flexDirection: 'column'}} onClick={() => navigate("/savedposts")}>
+                    <BookmarksIcon sx={{fontSize: 40, color: 'yellow'}}/>
+                </IconButton>
+                <Button type="submit" variant="contained" sx={{alignItems: 'center', mt: 1, height: 40, width: 100}} onClick={() => {localStorage.clear(); setCreds({uname: "", passwd: "", fname: "", lname: "", email: "", age: "", contact: "", passwd2: ""}); setButtonFlag(1)}}>Logout<LogoutIcon/></Button>
             </Box>
             <Box sx={{display: 'flex', flexDirection: 'column', mt: 5, alignItems: 'center'}}>
                 <Box sx={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
@@ -184,7 +192,7 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
                     <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
                         <Typography variant="h3" sx={{ml: 2}}>Form</Typography>
                         <TextField required autoFocus name='title' label='Title' type='text' value={values.title} onChange={changeHandler} sx={{width:150}}/>
-                        <TextField required name='desc' label='Description' type='text' value={values.desc} onChange={changeHandler} sx={{ml: 2, width:150}}/>
+                        <TextField required multiline maxRows={4} name='desc' label='Description' type='text' value={values.desc} onChange={changeHandler} sx={{ml: 2, width:150}}/>
                         <TextField name='tags' label='Tags' type='text' value={values.tags} onChange={changeHandler} sx={{ml: 2, width:150}}/>
                         <TextField name='banned' label='Banned Keywords' type='text' value={values.banned} onChange={changeHandler} sx={{mt: 2, width:200}}/>
                         <Button type='submit' variant='contained' disabled={checkEmpty()} onClick={submitForm} name='submitform' sx={{mt: 3, ml: 2}}>Submit</Button>
