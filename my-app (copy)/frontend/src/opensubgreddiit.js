@@ -14,6 +14,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import CommentIcon from '@mui/icons-material/Comment';
+import ReportIcon from '@mui/icons-material/Report';
 
 function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     
@@ -32,6 +33,9 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     const [commenttext, setCommentText] = useState("")
     const [commentpostid, setCommentPostID] = useState("")
     const [commentprintlist, setCommentPrintList] = useState([])
+    const [reportflag, setReportFlag] = useState(false);
+    const [reporttext, setReportText] = useState("")
+    const [reportpostid, setReportPostID] = useState("")
 
     const navigate = useNavigate();
     
@@ -336,6 +340,28 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     
             if (!check.ok) console.log("could not add comment")
             viewComments(postid)
+            getAllPosts()
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const addReport = async (postid, text) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/addreport", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid, 'text': text}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+    
+            if (!check.ok) console.log("could not add report")
+            else console.log("added report")
+            setReportFlag(false)
+            // viewComments(postid)
     
             } catch (error) {
             console.error(error);
@@ -349,6 +375,10 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
 
     const commentChange = (val) => {
         setCommentText(val.target.value)
+    }
+
+    const reportChange = (val) => {
+        setReportText(val.target.value)
     }
 
     useEffect(() => {
@@ -386,7 +416,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     useEffect(() => {
         if (Array.isArray(postlist))
             setPostPrintList(postlist.map((post) => (
-                <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
+                <Card sx={{maxWidth: 500, ml: 2, mt: 2}}>
                     <CardContent>
                         <Typography variant='body1' style={{whiteSpace: 'break-spaces'}}>{post.text}</Typography>
                         <br></br>
@@ -396,6 +426,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                         <Button onClick={() => {setAPIFlag(1); upvotePost(post._id)}}><ArrowUpwardIcon/>{post.upvotes.length}</Button>
                         <Button onClick={() => {setAPIFlag(1); downvotePost(post._id)}}><ArrowDownwardIcon/>{post.downvotes.length}</Button>
                         <Button onClick={() => {viewComments(post._id)}}><CommentIcon/>{post.comments.length}</Button>
+                        <Button onClick={() => {setReportFlag(true); setReportPostID(post._id)}}><ReportIcon/></Button>
                         <Button disabled={post.user === creds.uname} onClick={() => {setAPIFlag(1); followUser(post._id, post.user)}}><PersonAddIcon/></Button>
                         <Button onClick={() => {setAPIFlag(1); savePost(post._id)}}><SaveIcon/></Button>
                     </CardActions>
@@ -444,12 +475,19 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                     <ul>
                         {postprintlist}
                     </ul>
-                    <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center'}} open={commentflag} onClose={() => {setCommentFlag(false);}}>
+                    <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center', maxHeight: '310px', overflow: 'auto'}} open={commentflag} onClose={() => {setCommentFlag(false);}}>
                         <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
                             <Typography variant="h1" sx={{ml: 2}}>Comments</Typography>
                             {commentprintlist}
                             <TextField autoFocus name="comment" label='Add Comment' type='text' value={commenttext} onChange={commentChange} sx={{width: 600, height: 80, ml: 5}}/>
                             <Button type='submit' variant='contained' disabled={(commenttext === "")} onClick={() => {AddComment(commentpostid, commenttext); setCommentFlag(0); setCommentText(""); setAPIFlag(1); getAllPosts()}} name='submitcomment' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                        </Box>
+                    </Modal>
+                    <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center', maxHeight: '310px', overflow: 'auto'}} open={reportflag} onClose={() => {setReportFlag(false);}}>
+                        <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
+                            <Typography variant="h1" sx={{ml: 2}}>Add Report</Typography>
+                            <TextField autoFocus name="comment" label='Add Report' type='text' value={reporttext} onChange={reportChange} sx={{width: 600, height: 80, ml: 5}}/>
+                            <Button type='submit' variant='contained' disabled={(reporttext === "")} onClick={() => {addReport(reportpostid, reporttext); setReportFlag(false); setReportText(""); setAPIFlag(1); getAllPosts()}} name='submitreport' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
                         </Box>
                     </Modal>
                     <Backdrop open={apiflag} onClose={() => setAPIFlag(0)}>

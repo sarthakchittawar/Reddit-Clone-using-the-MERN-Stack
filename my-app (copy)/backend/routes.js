@@ -3,6 +3,7 @@ const userModel = require("./usermodel");
 const followModel = require("./followmodel");
 const postModel = require("./postmodel")
 const commentModel = require("./commentmodel")
+const reportModel = require("./reportmodel")
 const middleware = require("./middleware");
 const app = express();
 const bcrypt = require("bcryptjs");
@@ -552,6 +553,28 @@ app.post("/subgreddiits/posts/addcomment", middleware, async (req, res) => {
     check.comments.push(comment._id)
     await check.updateOne(check)
     await comment.save()
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/posts/addreport", middleware, async (req, res) => {
+
+  try {
+    const user = await userModel.findOne({_id: req.user.id})
+    
+    const check = await postModel.findOne({_id: req.body.postid})
+    
+    if (!check) return res.status(401).send({error: "No such Post"});
+
+    const rep = new reportModel({reportedby: user._id, reporteduser: check.user, concern: req.body.text, post: req.body.postid})
+    const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+    subg.reports.push(rep._id)
+
+    await subg.updateOne(subg)
+    await rep.save()
   }
   catch (error) {
     res.status(500).send(error);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Avatar, Backdrop, Button, Card, CardActions, CardContent, CardMedia, CircularProgress, IconButton, Modal, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Backdrop, Button, Card, CardActions, CardContent, CircularProgress, IconButton, Modal, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -11,19 +11,27 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddCommentIcon from '@mui/icons-material/AddComment';
+import CommentIcon from '@mui/icons-material/Comment';
+import ReportIcon from '@mui/icons-material/Report';
 
 function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
     
     const [buttonFlag, setButtonFlag] = useState(0);
-    const [currentsubg, setCurrentSubgG] = useState([])
-    const [postflag, setPostFlag] = useState(false)
-    const [bodytext, setBodyText] = useState("");
     const [postlist, setPostList] = useState([])
     const [postprintlist, setPostPrintList] = useState([])
     const [errorstate, setErrorState] = useState(0)
     const [errortext, setErrorText] = useState("Error 500");
     const [errorpost, setErrorPost] = useState("")
     const [apiflag, setAPIFlag] = useState(0)
+    const [commentflag, setCommentFlag] = useState(false);
+    const [commentlist, setCommentList] = useState([])
+    const [commenttext, setCommentText] = useState("")
+    const [commentpostid, setCommentPostID] = useState("")
+    const [commentprintlist, setCommentPrintList] = useState([])
+    const [reportflag, setReportFlag] = useState(false);
+    const [reporttext, setReportText] = useState("")
+    const [reportpostid, setReportPostID] = useState("")
 
     const navigate = useNavigate();
     
@@ -40,11 +48,6 @@ function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
     {
         setLoginStatus(-2);
     }
-
-    let url = window.location.href;
-    let parts = url.split("/");
-
-    const title = parts[parts.length - 1];
 
     const getCreds = async () => {
         try {
@@ -211,6 +214,78 @@ function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
             }
     }
 
+    const viewComments = async (postid) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/getcomments", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+            console.log("hi")
+    
+            if (!check.ok) console.log("could not get comments")
+            setCommentPostID(postid)
+            const arr = await check.json()
+            console.log(arr)
+            setCommentList(arr);
+            setCommentFlag(true);
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const AddComment = async (postid, text) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/addcomment", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid, 'text': text}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+    
+            if (!check.ok) console.log("could not add comment")
+            viewComments(postid)
+            getSavedPosts()
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const addReport = async (postid, text) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/posts/addreport", {
+                method: 'POST',
+                body: JSON.stringify({'postid': postid, 'text': text}),
+                headers: {
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
+                }
+            })
+    
+            if (!check.ok) console.log("could not add report")
+            else console.log("added report")
+            setReportFlag(false)
+    
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const commentChange = (val) => {
+        setCommentText(val.target.value)
+    }
+
+    const reportChange = (val) => {
+        setReportText(val.target.value)
+    }
+
     useEffect(() => {
         getCreds();
     }, [])
@@ -221,9 +296,23 @@ function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
     }, [creds])
 
     useEffect(() => {
+        console.log(commentlist)
+        if (Array.isArray(commentlist))
+        {
+            setCommentPrintList(commentlist.map((comment) => (
+                <li>
+                    <Typography sx={{ml: 5}} variant="body1">{comment.text}</Typography>
+                    <Typography sx={{ml: 5}} variant="body2">Posted By: {comment.user}</Typography>
+                    <br></br>
+                </li>
+            )))
+        }
+    }, [commentlist])
+
+    useEffect(() => {
         if (Array.isArray(postlist))
             setPostPrintList(postlist.map((post) => (
-                <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
+                <Card sx={{maxWidth: 500, ml: 2, mt: 2}}>
                     <CardContent>
                         <Typography variant='body1' style={{whiteSpace: 'break-spaces'}}>{post.text}</Typography>
                         <br></br>
@@ -233,6 +322,8 @@ function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
                     <CardActions>
                     <Button onClick={() => {setAPIFlag(1); upvotePost(post._id)}}><ArrowUpwardIcon/>{post.upvotes.length}</Button>
                     <Button onClick={() => {setAPIFlag(1); downvotePost(post._id)}}><ArrowDownwardIcon/>{post.downvotes.length}</Button>
+                    <Button onClick={() => {viewComments(post._id)}}><CommentIcon/>{post.comments.length}</Button>
+                    <Button onClick={() => {setReportFlag(true); setReportPostID(post._id)}}><ReportIcon/></Button>
                     <Button disabled={post.user === creds.uname} onClick={() => {setAPIFlag(1); followUser(post._id, post.user)}}><PersonAddIcon/></Button>
                     <Button onClick={() => {setAPIFlag(1); unsavePost(post._id)}}><DeleteIcon/></Button>
                     
@@ -278,6 +369,21 @@ function SavedPosts({loginstatus, setLoginStatus, creds, setCreds}) {
             <ul>
                 {postprintlist}
             </ul>
+            <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center', maxHeight: '310px', overflow: 'auto'}} open={commentflag} onClose={() => {setCommentFlag(false);}}>
+                <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
+                    <Typography variant="h1" sx={{ml: 2}}>Comments</Typography>
+                    {commentprintlist}
+                    <TextField autoFocus name="comment" label='Add Comment' type='text' value={commenttext} onChange={commentChange} sx={{width: 600, height: 80, ml: 5}}/>
+                    <Button type='submit' variant='contained' disabled={(commenttext === "")} onClick={() => {AddComment(commentpostid, commenttext); setCommentFlag(0); setCommentText(""); setAPIFlag(1); getSavedPosts()}} name='submitcomment' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                </Box>
+            </Modal>
+            <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center', maxHeight: '310px', overflow: 'auto'}} open={reportflag} onClose={() => {setReportFlag(false);}}>
+                <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
+                    <Typography variant="h1" sx={{ml: 2}}>Add Report</Typography>
+                    <TextField autoFocus name="comment" label='Add Report' type='text' value={reporttext} onChange={reportChange} sx={{width: 600, height: 80, ml: 5}}/>
+                    <Button type='submit' variant='contained' disabled={(reporttext === "")} onClick={() => {addReport(reportpostid, reporttext); setReportFlag(false); setReportText(""); setAPIFlag(1); getSavedPosts()}} name='submitreport' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                </Box>
+            </Modal>
             <Backdrop open={apiflag} onClose={() => setAPIFlag(0)}>
                 <CircularProgress/>
             </Backdrop>
