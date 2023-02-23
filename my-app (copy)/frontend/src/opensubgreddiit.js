@@ -321,6 +321,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
             console.log(arr)
             setCommentList(arr);
             setCommentFlag(true);
+            setAPIFlag(0)
     
             } catch (error) {
             console.error(error);
@@ -361,6 +362,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
             if (!check.ok) console.log("could not add report")
             else console.log("added report")
             setReportFlag(false)
+            setAPIFlag(0)
             // viewComments(postid)
     
             } catch (error) {
@@ -425,7 +427,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                     <CardActions>
                         <Button onClick={() => {setAPIFlag(1); upvotePost(post._id)}}><ArrowUpwardIcon/>{post.upvotes.length}</Button>
                         <Button onClick={() => {setAPIFlag(1); downvotePost(post._id)}}><ArrowDownwardIcon/>{post.downvotes.length}</Button>
-                        <Button onClick={() => {viewComments(post._id)}}><CommentIcon/>{post.comments.length}</Button>
+                        <Button onClick={() => {setAPIFlag(1); viewComments(post._id)}}><CommentIcon/>{post.comments.length}</Button>
                         <Button onClick={() => {setReportFlag(true); setReportPostID(post._id)}}><ReportIcon/></Button>
                         <Button disabled={post.user === creds.uname} onClick={() => {setAPIFlag(1); followUser(post._id, post.user)}}><PersonAddIcon/></Button>
                         <Button onClick={() => {setAPIFlag(1); savePost(post._id)}}><SaveIcon/></Button>
@@ -480,14 +482,14 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                             <Typography variant="h1" sx={{ml: 2}}>Comments</Typography>
                             {commentprintlist}
                             <TextField autoFocus name="comment" label='Add Comment' type='text' value={commenttext} onChange={commentChange} sx={{width: 600, height: 80, ml: 5}}/>
-                            <Button type='submit' variant='contained' disabled={(commenttext === "")} onClick={() => {AddComment(commentpostid, commenttext); setCommentFlag(0); setCommentText(""); setAPIFlag(1); getAllPosts()}} name='submitcomment' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                            <Button type='submit' variant='contained' disabled={(commenttext === "")} onClick={() => {AddComment(commentpostid, commenttext); setCommentText(""); setAPIFlag(1); getAllPosts()}} name='submitcomment' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
                         </Box>
                     </Modal>
                     <Modal sx={{height: '50%', width: '50%', mt: '20%', ml: '20%', alignItems: 'center', maxHeight: '310px', overflow: 'auto'}} open={reportflag} onClose={() => {setReportFlag(false);}}>
                         <Box sx={{backgroundColor: 'white', alignContent: 'center', borderRadius: 5}}>
                             <Typography variant="h1" sx={{ml: 2}}>Add Report</Typography>
-                            <TextField autoFocus name="comment" label='Add Report' type='text' value={reporttext} onChange={reportChange} sx={{width: 600, height: 80, ml: 5}}/>
-                            <Button type='submit' variant='contained' disabled={(reporttext === "")} onClick={() => {addReport(reportpostid, reporttext); setReportFlag(false); setReportText(""); setAPIFlag(1); getAllPosts()}} name='submitreport' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
+                            <TextField autoFocus name="report" label='Add Report' type='text' value={reporttext} onChange={reportChange} sx={{width: 600, height: 80, ml: 5}}/>
+                            <Button type='submit' variant='contained' disabled={(reporttext === "")} onClick={() => {setAPIFlag(1); addReport(reportpostid, reporttext); setReportFlag(false); setReportText(""); setAPIFlag(1); getAllPosts()}} name='submitreport' sx={{mb: 2, ml: 5}}><AddCommentIcon/></Button>
                         </Box>
                     </Modal>
                     <Backdrop open={apiflag} onClose={() => setAPIFlag(0)}>

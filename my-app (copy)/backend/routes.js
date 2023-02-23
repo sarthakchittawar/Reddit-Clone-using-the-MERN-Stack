@@ -553,6 +553,7 @@ app.post("/subgreddiits/posts/addcomment", middleware, async (req, res) => {
     check.comments.push(comment._id)
     await check.updateOne(check)
     await comment.save()
+    res.send(comment)
   }
   catch (error) {
     res.status(500).send(error);
@@ -569,12 +570,110 @@ app.post("/subgreddiits/posts/addreport", middleware, async (req, res) => {
     
     if (!check) return res.status(401).send({error: "No such Post"});
 
-    const rep = new reportModel({reportedby: user._id, reporteduser: check.user, concern: req.body.text, post: req.body.postid})
+    const rep = new reportModel({reportedby: user._id, reporteduser: check.user, concern: req.body.text, post: req.body.postid, status: 1})
     const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
     subg.reports.push(rep._id)
 
     await subg.updateOne(subg)
     await rep.save()
+    res.send(rep)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/getreports", middleware, async (req, res) => {
+
+  try {
+    const subg = await SubGreddiit.findOne({title: req.body.title})
+    
+    if (!subg) return res.status(401).send({error: "No such SubGreddiit"});
+
+    var p = []
+    for(var i=0; i<subg.reports.length; i++)
+    {
+      const rep = await reportModel.findOne({_id: subg.reports[i]})
+      const repby = await userModel.findOne({_id: rep.reportedby})
+      const repuser = await userModel.findOne({_id: rep.reporteduser})
+      rep.reportedby = repby.uname
+      rep.reporteduser = repuser.uname
+      const post = await postModel.findOne({_id: rep.post})
+      rep.post = post.text
+
+      p.push(rep)
+    }
+    res.send(p)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/reports/setstatus", middleware, async (req, res) => {
+
+  try {
+    const rep = await reportModel.findOne({_id: req.body.reportid})
+    if (!rep) return res.status(401).send({error: "No such Report"});
+
+    const post = await postModel.findOne({_id: rep.post, mod: req.user.id})
+    if (!post) return res.status(401).send({error: "No Access"});
+
+    rep.status = req.body.status
+
+    await rep.updateOne(rep)
+    console.log(rep)
+    res.send(rep)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/reports/deletepost", middleware, async (req, res) => {
+
+  try {
+    const rep = await reportModel.findOne({_id: req.body.reportid})
+    if (!rep) return res.status(401).send({error: "No such Report"});
+
+    const post = await postModel.findOne({_id: rep.post, mod: req.user.id})
+    if (!post) return res.status(401).send({error: "No Access"});
+
+    const del = await postModel.deleteOne({_id: post._id})
+    const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
+    var p =[]
+    for(var i=0; i<subg.reports.length; i++)
+    {
+      const repp = await reportModel.findOne({_id: subg.reports[i]})
+      if (repp.post != post._id)
+      {
+        p.push(subg.reports[i])
+      }
+      else
+      {
+        await reportModel.deleteOne({_id: repp._id})
+      }
+    }
+    subg.reports = p
+    const index = subg.posts.indexOf(post._id)
+    subg.posts.splice(index, 1)
+
+    const sp = await userModel.find({})
+    for(var i=0; i< sp.length; i++)
+    {
+      if (sp[i].savedposts.includes(post._id))
+      {
+        const ind = sp[i].savedposts.indexOf(post._id)
+        sp[i].savedposts.splice(ind, 1)
+        await sp[i].updateOne(sp[i])
+      }
+    }
+
+    await subg.updateOne(subg)
+    res.send(p)
   }
   catch (error) {
     res.status(500).send(error);

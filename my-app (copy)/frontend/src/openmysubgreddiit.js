@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, BottomNavigation, BottomNavigationAction, Button, IconButton, Typography } from "@mui/material";
+import { Avatar, Backdrop, BottomNavigation, BottomNavigationAction, Button, Card, CardActions, CardContent, CircularProgress, IconButton, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -22,6 +22,10 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     const [bannedusersList, setBannedUsersList] = useState([]);
     const [requests, setRequests] = useState([]);
     const [requestsList, setRequestsList] = useState([]);
+    const [reports, setReports] = useState([]);
+    const [reportsList, setReportsList] = useState([]);
+    const [reportsindex, setReportsIndex] = useState(0)
+    const [apiflag, setAPIFlag] = useState(1)
 
     const navigate = useNavigate();
     
@@ -142,6 +146,66 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
         }
     }
 
+    const getreports = async (title) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/getreports", {
+                method: 'POST',
+                body: JSON.stringify({'title': title}),
+                headers: {
+                'Content-Type': 'application/json',
+                "x-auth-token": localStorage.getItem("jwt")
+                }
+            })
+            const arr = await check.json();
+            console.log(arr)
+            setAPIFlag(0)
+            setReports(arr)
+        
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const setstatus = async (reportid, status) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/reports/setstatus", {
+                method: 'POST',
+                body: JSON.stringify({'reportid': reportid, 'status': status}),
+                headers: {
+                'Content-Type': 'application/json',
+                "x-auth-token": localStorage.getItem("jwt")
+                }
+            })
+            if (check.ok) console.log("Report Ignored")
+            else console.log("Report could not be ignored")
+
+            getreports(title)
+        
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const deletepost = async (reportid) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/reports/deletepost", {
+                method: 'POST',
+                body: JSON.stringify({'reportid': reportid}),
+                headers: {
+                'Content-Type': 'application/json',
+                "x-auth-token": localStorage.getItem("jwt")
+                }
+            })
+            if (check.ok) console.log("Post & its reports deleted")
+            else console.log("Could not delete")
+
+            getreports(title)
+        
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
     // const checkJoin = () => {
     //     const s1 = new Set(users)
     //     const s2 = new Set(bannedusers)
@@ -163,7 +227,8 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     useEffect(() => {
         if (title !== "")
         {
-            getusers(title)
+            getusers(title);
+            getreports(title);
         }
     }, [value])
 
@@ -179,10 +244,34 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     }, [users])
 
     useEffect(() => {
-        console.log(requests)
+        // console.log(requests)
         if (Array.isArray(requests))
             setRequestsList((requests).map((user) => <li>{user}<Button color='success' variant='contained' onClick={() => acceptRequest(user)}>Accept</Button><Button color='warning' variant='contained' onClick={() => rejectRequest(user)}>Reject</Button></li>))
     }, [requests])
+
+    useEffect(() => {
+        // console.log(reports)
+        if (Array.isArray(reports))
+            setReportsList((reports).map((report) => 
+            <Card sx={{maxWidth: 500, ml: 2, mt: 2}}>
+                <CardContent>
+                    <Typography variant="h6">Concern:</Typography>
+                    <Typography sx={{overflow: 'scroll', textOverflow: 'clip'}} variant="body1" style={{whiteSpace: 'break-spaces'}}>{report.concern}</Typography>
+                    <br></br>
+                    <Typography sx={{overflow: 'scroll', textOverflow: 'clip'}} variant="h6">Post Text:</Typography>
+                    <Typography variant="body1" style={{whiteSpace: 'break-spaces'}}>{report.post}</Typography>
+                    <br></br>
+                    <Typography variant="body2">Reported By: {report.reportedby}</Typography>
+                    <Typography variant="body2">Reported User: {report.reporteduser}</Typography>
+                </CardContent>
+                <CardActions>
+                    <Button variant='contained' disabled={report.status === 0} onClick={() => {}} color='error'>Block User</Button>
+                    <Button variant='contained' disabled={report.status === 0} onClick={() => {setAPIFlag(1); deletepost(report._id)}} color='warning'>Delete Post</Button>
+                    <Button variant='contained' disabled={report.status === 0} onClick={() => {setAPIFlag(1); setstatus(report._id, 0)}} color='success'>Ignore</Button>
+                </CardActions>
+            </Card>
+            ))
+    }, [reports])
 
     useEffect(() => {
         if (Array.isArray(bannedusers))
@@ -240,6 +329,16 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 </ul>
             </Box>) : <></>}
             {(value === 1 && requests.length === 0)?(<Box><Typography variant='h4'>You have no requests</Typography></Box>):<></>}
+            {(value === 3) ? (<Box>
+                <ul>
+                    {reportsList}
+                </ul>
+            </Box>) : <></>}
+            {(value === 3 && reports.length === 0)?(<Box><Typography variant='h4'>You have no reports</Typography></Box>):<></>}
+
+            <Backdrop open={apiflag} onClose={() => setAPIFlag(0)}>
+                <CircularProgress/>
+            </Backdrop>
         </>
     )
 }

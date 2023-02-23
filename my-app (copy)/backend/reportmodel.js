@@ -16,6 +16,10 @@ const ReportSchema = new mongoose.Schema({
     post: {
         type: String,
         required: true
+    },
+    status: {
+        type: Number,
+        required: true
     }
 });
 
