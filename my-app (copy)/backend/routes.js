@@ -279,9 +279,22 @@ app.post("/deletesubgreddiit", middleware, async (req, res) => {
 
   try {
     const uid = await userModel.findOne({_id: req.user.id});
-    const deletion = await SubGreddiit.deleteOne({mod: uid._id, title: req.body.title})
+    const subg = await SubGreddiit.findOneAndDelete({mod: uid._id, title: req.body.title})
     
-    if (!deletion) return res.status(401).send({error: "No such SubGreddiit"});
+    if (!subg) return res.status(401).send({error: "No such SubGreddiit"});
+    for(var i=0; i<subg.posts.length; i++)
+    {
+      const post = await postModel.findOne({_id: subg.posts[i]})
+      for(var j=0; j<post.comments.length; j++)
+      {
+        await commentModel.findOneAndDelete({_id: post.comments[j]})
+      }
+      await postModel.deleteOne({_id: subg.posts[i]})
+    }
+    for(var i=0; i<subg.reports.length; i++)
+    {
+      await reportModel.findOneAndDelete({_id: subg.reports[i]})
+    }
 
     res.send(deletion);
   }
@@ -425,6 +438,9 @@ app.post("/subgreddiits/savepost", middleware, async (req, res) => {
   try {
     const post = await postModel.findOne({_id: req.body.postid})
     const id = await userModel.findOne({_id: req.user.id})
+    const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
+
+    if (!subg.followers.includes(id._id)) return res.status(401).send({error: "You have not joined this subgreddiit"});
     
     if (!post) return res.status(401).send({error: "No such Post"});
     if (!id) return res.status(401).send({error: "No such User"});
@@ -480,6 +496,7 @@ app.post("/getsavedposts", middleware, async (req, res) => {
       const newid = await userModel.findOne({_id: data.user})
       data.user = newid.uname
       const subg = await SubGreddiit.findOne({_id: data.subgreddiit})
+      if (subg.blockedusers.includes(newid._id)) data.user = "Blocked User"
       data.subgreddiit = subg.title
       p.push(data)
     }
@@ -507,6 +524,7 @@ app.post("/subgreddiits/getallposts", middleware, async (req, res) => {
       const data = await postModel.findOne({_id: postid})
       const newid = await userModel.findOne({_id: data.user})
       data.user = newid.uname
+      if (check.blockedusers.includes(newid._id)) data.user = "Blocked User"
       p.push(data)
     }
     res.send(p)
@@ -530,6 +548,8 @@ app.post("/subgreddiits/posts/getcomments", middleware, async (req, res) => {
       const comment = await commentModel.findOne({_id: check.comments[i]})
       const data = await userModel.findOne({_id: comment.user})
       comment.user = data.uname
+      const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+      if (subg.blockedusers.includes(data._id)) comment.user = "Blocked User"
       p.push(comment)
     }
     res.send(p)
@@ -640,11 +660,17 @@ app.post("/subgreddiits/reports/deletepost", middleware, async (req, res) => {
     if (!rep) return res.status(401).send({error: "No such Report"});
 
     const post = await postModel.findOne({_id: rep.post, mod: req.user.id})
-    if (!post) return res.status(401).send({error: "No Access"});
+    if (!post) return res.status(401).send({error: "No Access, or already deleted"});
 
-    const del = await postModel.deleteOne({_id: post._id})
+    const del = await postModel.findOneAndDelete({_id: post._id})
     const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
-    var p =[]
+
+    for(var i=0; i<del.comments.length; i++)
+    {
+      await commentModel.deleteOne({_id: del.comments[i]})
+    }
+
+    var p = []
     for(var i=0; i<subg.reports.length; i++)
     {
       const repp = await reportModel.findOne({_id: subg.reports[i]})
@@ -674,6 +700,33 @@ app.post("/subgreddiits/reports/deletepost", middleware, async (req, res) => {
 
     await subg.updateOne(subg)
     res.send(p)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.post("/subgreddiits/reports/blockuser", middleware, async (req, res) => {
+
+  console.log(subg.reporteduser)
+  console.log(subg.mod)
+  try {
+    const rep = await reportModel.findOne({_id: req.body.reportid})
+    if (!rep) return res.status(401).send({error: "No such Report"});
+
+    const post = await postModel.findOne({_id: rep.post, mod: req.user.id})
+    if (!post) return res.status(401).send({error: "No Access"});
+
+    const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
+
+    if (rep.reporteduser === subg.mod) return res.status(401).send({error: "You can't block yourself lol"})
+    if (subg.blockedusers.includes(rep.reporteduser)) return res.status(401).send({error: "User already blocked!"})
+    
+    subg.blockedusers.push(rep.reporteduser);
+
+    await subg.updateOne(subg)
+    res.send(rep)
   }
   catch (error) {
     res.status(500).send(error);
@@ -837,6 +890,8 @@ app.post("/subgreddiits/leave", async (req, res) => {
     
     const index = find.followers.indexOf(id._id);
     find.followers.splice(index, 1);
+    const index2 = find.blockedusers.indexOf(id._id);
+    find.blockedusers.splice(index2, 1);
     find.left.push(id._id)
     await find.updateOne(find)
     res.send(find)

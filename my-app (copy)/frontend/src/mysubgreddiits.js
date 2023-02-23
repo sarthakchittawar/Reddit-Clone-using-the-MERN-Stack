@@ -135,7 +135,7 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
         if (Array.isArray(subGreddiits))
         {
             setSubGreddiitsArray(subGreddiits.map((subg) => (
-                <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
+                <Card sx={{maxWidth: 400, ml: 2, mt: 2, borderRadius: 3, '&:hover': {backgroundColor: 'orangered'}}}>
                     <CardContent>
                         <Typography variant="h3">Title: {subg.title}</Typography>
                         <Typography variant="body1" style={{whiteSpace: 'break-spaces'}}>Description:<br/>{subg.desc}</Typography>

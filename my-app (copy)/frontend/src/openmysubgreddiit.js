@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Avatar, Backdrop, BottomNavigation, BottomNavigationAction, Button, Card, CardActions, CardContent, CircularProgress, IconButton, Typography } from "@mui/material";
+import { Alert, Avatar, Backdrop, BottomNavigation, BottomNavigationAction, Button, Card, CardActions, CardContent, CircularProgress, IconButton, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -25,7 +25,13 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     const [reports, setReports] = useState([]);
     const [reportsList, setReportsList] = useState([]);
     const [reportsindex, setReportsIndex] = useState(0)
+    const [reportid, setReportID] = useState("")
+    const [blockflag, setBlockFlag] = useState(0)
     const [apiflag, setAPIFlag] = useState(1)
+    const [disabledflag, setDisabledFlag] = useState(0)
+    const [countdown, setCountdown] = useState(0)
+    const [errorstate, setErrorState] = useState(0)
+    const [errortext, setErrorText] = useState("Error 500");
 
     const navigate = useNavigate();
     
@@ -196,8 +202,51 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 "x-auth-token": localStorage.getItem("jwt")
                 }
             })
-            if (check.ok) console.log("Post & its reports deleted")
-            else console.log("Could not delete")
+            const arr = check.json()
+            if (check.ok)
+            {
+                console.log("Post deleted")
+                setErrorState(0)
+                setErrorText("")
+            }
+            else
+            {
+                console.log("Could not delete post")
+                setErrorState(1)
+                setErrorText(arr.error)
+            }
+
+            getreports(title)
+        
+            } catch (error) {
+            console.error(error);
+            }
+    }
+
+    const blockuser = async (reportid) => {
+        try {
+            const check = await fetch("http://localhost:5000/subgreddiits/reports/blockuser", {
+                method: 'POST',
+                body: JSON.stringify({'reportid': reportid}),
+                headers: {
+                'Content-Type': 'application/json',
+                "x-auth-token": localStorage.getItem("jwt")
+                }
+            })
+            const arr = await check.json()
+
+            if (check.ok)
+            {
+                console.log("User blocked")
+                setErrorState(0)
+                setErrorText("")
+            }
+            else
+            {
+                console.log("User could not be blocked")
+                setErrorState(1)
+                setErrorText(arr.error)
+            }
 
             getreports(title)
         
@@ -222,6 +271,20 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
 
     useEffect(() => {
         getCreds();
+        // const interval = setInterval(() => {
+        //     if (countdown > 0 && blockflag === 1)
+        //     {
+        //         setCountdown(countdown - 1);
+        //         getreports(title)
+        //     }
+        //     else if (blockflag === 1 && title !== "")
+        //     {
+        //         setBlockFlag(0)
+        //         getreports(title)
+        //         setCountdown(3)
+        //     }
+        //   }, 1000);
+        //   return () => clearInterval(interval);
     }, [])
 
     useEffect(() => {
@@ -229,6 +292,10 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
         {
             getusers(title);
             getreports(title);
+            setBlockFlag(0)
+            setDisabledFlag(0)
+            setErrorState(0)
+            setErrorText("")
         }
     }, [value])
 
@@ -249,6 +316,46 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
             setRequestsList((requests).map((user) => <li>{user}<Button color='success' variant='contained' onClick={() => acceptRequest(user)}>Accept</Button><Button color='warning' variant='contained' onClick={() => rejectRequest(user)}>Reject</Button></li>))
     }, [requests])
 
+    // useEffect(() => {
+    //     console.log(blockflag)
+    // }, [blockflag])
+
+    useEffect(() => {
+        if (countdown === 0 && title !== "")
+        {
+            if (blockflag === 1)
+            {
+                setAPIFlag(1)
+                blockuser(reportid)
+            }
+            setBlockFlag(0)
+            setDisabledFlag(0)
+            getreports(title)
+        }
+        else if (blockflag === 1)
+        {
+            setTimeout(function () {
+                setCountdown(countdown - 1)
+                getreports(title)
+            }, 1000)
+        }
+
+        // const interval = setInterval(() => {
+        //     if (countdown > 0 && blockflag === 1)
+        //     {
+        //         setCountdown(countdown - 1);
+        //         getreports(title)
+        //     }
+        //     else if (blockflag === 1 && title !== "")
+        //     {
+        //         setBlockFlag(0)
+        //         getreports(title)
+        //         setCountdown(3)
+        //     }
+        //   }, 1000);
+        //   return () => clearInterval(interval);
+    }, [countdown])
+
     useEffect(() => {
         // console.log(reports)
         if (Array.isArray(reports))
@@ -265,19 +372,19 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                     <Typography variant="body2">Reported User: {report.reporteduser}</Typography>
                 </CardContent>
                 <CardActions>
-                    <Button variant='contained' disabled={report.status === 0} onClick={() => {}} color='error'>Block User</Button>
-                    <Button variant='contained' disabled={report.status === 0} onClick={() => {setAPIFlag(1); deletepost(report._id)}} color='warning'>Delete Post</Button>
-                    <Button variant='contained' disabled={report.status === 0} onClick={() => {setAPIFlag(1); setstatus(report._id, 0)}} color='success'>Ignore</Button>
+                    <Button variant='contained' disabled={report.status === 0 || (disabledflag === 1 && reportsindex !== reports.indexOf(report))} onClick={() => {setAPIFlag(1); setBlockFlag((blockflag+1)%2); setDisabledFlag((disabledflag+1)%2); setReportsIndex(reports.indexOf(report)); getreports(title); if (blockflag === 0 && reportsindex === reports.indexOf(report)){ setReportID(report._id); setCountdown(3); console.log(countdown) }}} color='error'>{(blockflag === 1 && reportsindex === reports.indexOf(report))?<>Cancel In {countdown} secs</>:<>Block User</>}</Button>
+                    <Button variant='contained' disabled={report.status === 0 || disabledflag === 1} onClick={() => {setAPIFlag(1); deletepost(report._id)}} color='warning'>Delete Post</Button>
+                    <Button variant='contained' disabled={report.status === 0 || disabledflag === 1} onClick={() => {setAPIFlag(1); setstatus(report._id, 0)}} color='success'>Ignore</Button>
                 </CardActions>
+                {(errorstate === 1 && reportid === report._id) ? <Alert onClose={() => {setErrorState(0); setAPIFlag(1); setErrorText(""); getreports(title)}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
             </Card>
-            ))
+))
     }, [reports])
 
     useEffect(() => {
         if (Array.isArray(bannedusers))
             setBannedUsersList(bannedusers.map((user) => <li>{user}</li>))
     }, [bannedusers])
-
 
     return (
         <>

@@ -148,6 +148,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                 setAPIFlag(1)
                 getAllPosts();
             }
+            setBodyText("")
     
             } catch (error) {
             console.error(error);

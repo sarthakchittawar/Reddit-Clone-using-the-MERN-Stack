@@ -151,8 +151,8 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     useEffect(() => {
         if (Array.isArray(joinedlist))
             setJoinedPrintList(joinedlist.map((subg) => (
-                <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
-                    <CardContent>
+                <Card sx={{maxWidth: 400, ml: 2, mt: 2, borderRadius: 3, '&:hover': {backgroundColor: 'orangered'}}}>
+                    <CardContent onClick={() => {viewSubGreddiit(subg.title)}} sx={{'&:hover': {cursor: 'pointer'}}}>
                         <Typography variant="h3">Title: {subg.title}</Typography>
                         <Typography variant="h5">Description: {subg.desc}</Typography>
                         <Typography variant="h6">Followers: {subg.followers.length}</Typography>
@@ -160,7 +160,7 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
                         <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
                     </CardContent>
                     <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave <ExitToAppIcon/></Button>
-                    <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View</Button>
+                    {/* <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View</Button> */}
                 </Card>
             )))
     }, [joinedlist])
