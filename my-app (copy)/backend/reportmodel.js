@@ -20,6 +20,10 @@ const ReportSchema = new mongoose.Schema({
     status: {
         type: Number,
         required: true
+    },
+    date: {
+        type: Date,
+        required: true
     }
 });
 

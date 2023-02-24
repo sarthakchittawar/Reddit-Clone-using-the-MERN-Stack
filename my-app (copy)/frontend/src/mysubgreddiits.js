@@ -74,6 +74,7 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
         if (sendValues.ok) {
             console.log("SubGreddiit created successfully!");
             setErrorState(1);
+            setValues({title: "", desc: "", tags: "", banned: ""})
         }
         else {
             console.error("Error in creation of SubGreddiit")

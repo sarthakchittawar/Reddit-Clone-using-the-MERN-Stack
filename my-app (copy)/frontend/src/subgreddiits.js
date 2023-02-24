@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Avatar, Button, Card, CardContent, IconButton, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Button, Card, CardContent, IconButton, MenuItem, OutlinedInput, Radio, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -8,11 +8,17 @@ import RedditIcon from '@mui/icons-material/Reddit';
 import BookmarksIcon from '@mui/icons-material/Bookmarks';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Select from '@mui/material/Select';
+import Chip from '@mui/material/Chip';
 
 function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     
     const [buttonFlag, setButtonFlag] = useState(0);
     const [searchtext, setSearchText] = useState("");
+    const [searchjoinedlist, setSearchJoinedList] = useState([]);
+    const [searchnotjoinedlist, setSearchNotJoinedList] = useState([]);
+    const [tagsjoinedlist, setTagsJoinedList] = useState([]);
+    const [tagsnotjoinedlist, setTagsNotJoinedList] = useState([]);
     const [joinedlist, setJoinedList] = useState([]);
     const [notjoinedlist, setNotJoinedList] = useState([]);
     const [joinedprintlist, setJoinedPrintList] = useState([]);
@@ -21,6 +27,13 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     const [errorstate, setErrorState] = useState(0)
     const [errortext, setErrorText] = useState("Error 500");
     const [errorsubg, setErrorSubg] = useState("")
+    const [personName, setPersonName] = React.useState([]);
+    const [names, setNames] = useState([])
+    const [searchflag, setSearchFlag] = useState(0)
+    const [tagflag, setTagFlag] = useState(0)
+    const [namesort, setNameSort] = useState(0)
+    const [followersort, setFollowerSort] = useState(0)
+    const [datesort, setDateSort] = useState(0)
 
     const navigate = useNavigate();
     
@@ -66,6 +79,7 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             body: JSON.stringify({'search': searchtext, 'uname': creds.uname}),
             headers: {
             'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem("jwt")
             }
         })
         console.log("search")
@@ -73,6 +87,9 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
         if (search.ok){
             setJoinedList(arr[0])
             setNotJoinedList(arr[1])
+            setSearchJoinedList(arr[0])
+            setSearchNotJoinedList(arr[1])
+            setSearchFlag(1)
         }
 
         } catch (error) {
@@ -87,6 +104,7 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             body: JSON.stringify({'title': title, 'uname': creds.uname}),
             headers: {
             'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem("jwt")
             }
         })
         setLeaveFlag(1);
@@ -131,6 +149,33 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
         }
     }
 
+    const getalltags = async () => {
+        try {
+            console.log("hi")
+        const check = await fetch("http://localhost:5000/subgreddiits/getalltags", {
+            method: 'GET',
+            headers: {
+            'Content-Type': 'application/json',
+            'x-auth-token': localStorage.getItem("jwt")
+            }
+        })
+        const arr = await check.json()
+        if (check.ok)
+        {
+            console.log("got all tags")
+            setNames(arr)
+            
+        }
+        else
+        {
+            console.log("Could not get tags")
+        }
+
+        } catch (error) {
+        console.error(error);
+        }
+    }
+
     useEffect(() => {
         getCreds();
     }, [])
@@ -145,8 +190,148 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
 
     useEffect(() => {
         if (creds.uname !== "")
+        {
             search();
+        }
     }, [creds])
+
+    useEffect(() => {
+        if (searchflag === 1)
+        {
+            getalltags()
+            setPersonName([])
+            setSearchFlag(0)
+        }
+    }, [searchflag])
+
+    useEffect(() => {
+        if (tagflag === 1 && personName.length !== 0)
+        {
+            var arr = personName
+            var p= []
+            var q= []
+            for(var i=0; i<searchjoinedlist.length; i++)
+            {
+                for (var j=0; j<searchjoinedlist[i].tags.length; j++)
+                {
+                    
+                    if (arr.includes(searchjoinedlist[i].tags[j]))
+                    {
+                        p.push(searchjoinedlist[i])
+                        break;
+                    }
+                }
+            }
+            for(i=0; i<searchnotjoinedlist.length; i++)
+            {
+                for (j=0; j<searchnotjoinedlist[i].tags.length; j++)
+                {
+                    if (arr.includes(searchnotjoinedlist[i].tags[j]))
+                    {
+                        q.push(searchnotjoinedlist[i])
+                        break;
+                    }
+                }
+            }
+            setTagsJoinedList(p)
+            setTagsNotJoinedList(q)
+            setJoinedList(p)
+            setNotJoinedList(q)
+            setTagFlag(0)
+        }
+        else if (tagflag === 1 && personName.length === 0)
+        {
+            setTagsJoinedList(searchjoinedlist)
+            setTagsNotJoinedList(searchnotjoinedlist)
+            setJoinedList(searchjoinedlist)
+            setNotJoinedList(searchnotjoinedlist)
+            setTagFlag(0)
+        }
+    }, [tagflag])
+
+    function namecompare(a, b) {
+        return a.title.localeCompare(b.title)
+    }
+    
+    function followercompare(a, b) {
+        return b.followers.length - a.followers.length
+    }
+
+    function datecompare(a, b) {
+        return (b.date > a.date)
+    }
+
+    useEffect(() => {
+        var list = tagsjoinedlist.slice()
+        var list2 = tagsnotjoinedlist.slice()
+        if (namesort !== 0)
+        {
+            // setFollowerSort(0)
+            // setDateSort(0)
+            list.sort(namecompare)
+            list2.sort(namecompare)
+            if (namesort === 2)
+            {
+                list.reverse()
+                list2.reverse()
+            }
+        }
+        if (followersort !== 0)
+        {
+            // setNameSort(0)
+            // setDateSort(0)
+            list.sort(followercompare)
+            list2.sort(followercompare)
+        }
+        if (datesort !== 0)
+        {
+            // setNameSort(0)
+            // setFollowerSort(0)
+            list.sort(datecompare)
+            list2.sort(datecompare)
+        }
+        // setJoinedList(list)
+        // setNotJoinedList(list2)
+        console.log(list)
+        console.log(list2)
+
+        if (Array.isArray(list))
+            setJoinedPrintList(list.map((subg) => (
+                <Card sx={{maxWidth: 400, ml: 2, mt: 2, borderRadius: 3, '&:hover': {backgroundColor: 'orangered'}}}>
+                    <CardContent onClick={() => {viewSubGreddiit(subg.title)}} sx={{'&:hover': {cursor: 'pointer'}}}>
+                        <Typography variant="h3">Title: {subg.title}</Typography>
+                        <Typography variant="h5">Description: {subg.desc}</Typography>
+                        <Typography variant="h6">Followers: {subg.followers.length}</Typography>
+                        <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
+                        <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
+                    </CardContent>
+                    <Button disabled={(subg.mod === creds.uname)} onClick={() => {leaveSubGreddiit(subg.title)}}>Leave <ExitToAppIcon/></Button>
+                    {/* <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View</Button> */}
+                </Card>
+            )))
+
+        if (Array.isArray(list2))
+            setNotJoinedPrintList(notjoinedlist.map((subg) => (
+                <Card sx={{maxWidth: 400, ml: 2, mt: 2}}>
+                    <CardContent>
+                        <Typography variant="h3">Title: {subg.title}</Typography>
+                        <Typography variant="h5">Description: {subg.desc}</Typography>
+                        <Typography variant="h6">Followers: {subg.followers.length}</Typography>
+                        <Typography variant="h6">No. of Posts: {subg.posts.length}</Typography>
+                        <Typography variant="h6">Banned Keywords: {subg.banned.join(', ')}</Typography>
+                    </CardContent>
+                    <Button onClick={() => {setErrorState(0);setErrorText("");setErrorSubg("");joinSubGreddiit(subg.title)}}>Request to Join</Button>
+                    {/* <Button sx={{ml: 8}} onClick={() => {viewSubGreddiit(subg.title)}}>View SubGreddiit</Button> */}
+                    {(errorstate === 1 && errorsubg === subg.title) ? <Alert onClose={() => {setErrorState(0); setErrorText("");}} variant='filled' severity='error'>{errortext}</Alert> : <></>}
+                </Card>
+            )))
+
+    }, [namesort, followersort, datesort])
+
+    useEffect(() => {
+        console.log(personName)
+        setTagFlag(1)
+    }, [personName])
 
     useEffect(() => {
         if (Array.isArray(joinedlist))
@@ -183,6 +368,49 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             )))
     }, [notjoinedlist, errorstate])
 
+    const ITEM_HEIGHT = 48;
+    const ITEM_PADDING_TOP = 8;
+    const MenuProps = {
+    PaperProps: {
+        style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250,
+        },
+    },
+    };
+
+    // function getStyles(name, personName, theme) {
+    //     return {
+    //       fontWeight:
+    //         personName.indexOf(name) === -1
+    //           ? theme.typography.fontWeightRegular
+    //           : theme.typography.fontWeightMedium,
+    //     };
+    //   }
+
+    // const names = [
+    //     'Oliver Hansen',
+    //     'Van Henry',
+    //     'April Tucker',
+    //     'Ralph Hubbard',
+    //     'Omar Alexander',
+    //     'Carlos Abbott',
+    //     'Miriam Wagner',
+    //     'Bradley Wilkerson',
+    //     'Virginia Andrews',
+    //     'Kelly Snyder',
+    //   ];
+
+    const handleChange = (event) => {
+        const {
+          target: { value },
+        } = event;
+        setPersonName(
+          // On autofill we get a stringified value.
+          typeof value === 'string' ? value.split(',') : value,
+        );
+      };
+
     return (
         <>
             <Box justifyContent="space-between" sx={{display: 'flex', flexDirection: 'row', alignItems: 'left', p: 1, backgroundColor: '#ba000d'}}>
@@ -211,7 +439,38 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             </Box>
             {/* add stuff here */}
             <Box>
-                <TextField name="searchtext" value={searchtext} type='text' onChange={changeHandler}/><Button variant='contained' onClick={() => search()}>Search</Button>
+                <TextField name="searchtext" value={searchtext} type='text' onChange={changeHandler}/>
+                <Button sx={{ml: 1}} variant='contained' onClick={() => search()}>Search</Button>
+                <Select sx={{ml: 5}} multiple value={personName} onChange={handleChange} input={<OutlinedInput/>} renderValue={(s) => (
+                    <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
+                        {s.map((value) => (
+                            <Chip key={value} label={value}/>
+                        ))}
+                    </Box>
+                )}
+                MenuProps={MenuProps}
+                >
+                {names.map((name) => (
+                    <MenuItem
+                    key={name}
+                    value={name}>{name}
+                    {/* style={getStyles(name, personName, theme)} */}
+                    </MenuItem>
+                ))}
+                </Select>
+                <br></br>
+                Sort by Name (None/Asc/Desc)
+                <Radio onClick={() => {setNameSort(0); setFollowerSort(0); setDateSort(0)}} checked={namesort === 0}/>
+                <Radio onClick={() => {setNameSort(1); setFollowerSort(0); setDateSort(0)}} checked={namesort === 1}/>
+                <Radio onClick={() => {setNameSort(2); setFollowerSort(0); setDateSort(0)}} checked={namesort === 2}/>
+                <br></br>
+                Sort by number of Followers (None/Desc)
+                <Radio onClick={() => {setFollowerSort(0); setNameSort(0); setDateSort(0)}} checked={followersort === 0}/>
+                <Radio onClick={() => {setFollowerSort(1); setNameSort(0); setDateSort(0)}} checked={followersort === 1}/>
+                <br></br>
+                Sort by Creation Date (Latest on top)
+                <Radio onClick={() => {setDateSort(0); setNameSort(0); setFollowerSort(0)}} checked={datesort === 0}/>
+                <Radio onClick={() => {setDateSort(1); setNameSort(0); setFollowerSort(0)}} checked={datesort === 1}/>
             </Box>
             <br></br>
             <Typography variant="h4">Joined SubGreddiits:</Typography>

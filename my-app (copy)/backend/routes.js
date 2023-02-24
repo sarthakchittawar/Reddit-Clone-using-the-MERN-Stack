@@ -74,6 +74,9 @@ app.post("/addfollower", middleware, async (req, res) => {
     const user = await userModel.findOne({_id: req.user.id});
     const find = await followModel.findOne({from: follower._id, to: user._id});
 
+    if (!user)
+      return res.status(401).send({error: "No such user"});
+
     if (find)
       return res.status(401).send({error: "Already a follower"});
     const follow = new followModel({from: follower._id, to: user._id});
@@ -92,6 +95,9 @@ app.post("/addfollowing", middleware, async (req, res) => {
     const following = await userModel.findOne({uname: req.body.funame});
     const user = await userModel.findOne({_id: req.user.id});
     const find = await followModel.findOne({from: user._id, to: following._id});
+
+    if (!user)
+      return res.status(401).send({error: "No such user"});
 
     if (user.uname === following.uname) return res.status(401).send({error: "Can't follow yourself"});
 
@@ -191,7 +197,10 @@ app.get("/getcreds", middleware, async (req, res) => {
     }
 });
 
-app.get("/getusers", async (req, res) => {
+app.get("/getusers", middleware, async (req, res) => {
+  const check = await userModel.find({_id: req.user.id})
+  if (!check) return res.status(401).send({error: "No Access"})
+
   const users = await userModel.find({});
   try {
     res.send(users);
@@ -200,10 +209,13 @@ app.get("/getusers", async (req, res) => {
   }
 });
 
-// verify that ID is yours everywhere
 app.post("/editprofile", middleware, async (req, res) => {
     
   try {
+      const olduser = await userModel.findOne({_id: req.user.id})
+
+      if (!olduser) return res.status(401).send({error: "No edit access"});
+
       const user = new userModel(req.body);
       const u = await userModel.findOne({uname: req.body.uname, _id: {$ne: req.body._id}})
       const e = await userModel.findOne({email: req.body.email, _id: {$ne: req.body._id}})
@@ -214,7 +226,7 @@ app.post("/editprofile", middleware, async (req, res) => {
         return res.status(401).send({error: "Email ID already taken!"});
     
       res.send(user);
-      const olduser = await userModel.findOne({_id: req.user.id})
+      
       await olduser.updateOne(user);
   }
   catch (error) {
@@ -234,14 +246,28 @@ app.post("/createsubgreddiit", middleware, async (req, res) => {
         return res.status(401).send({error: "No such user"});
       subg.followers[0] = id._id;
       subg.mod = id._id;
+      subg.date = subg._id.getTimestamp()
 
       if (!req.body.tags) req.body.tags = "";
+      var arr2 = req.body.tags.split(",")
+      for(var i=0; i<arr2.length; i++)
+      {
+        var str = arr2[i].trim()
+        if (str.split(" ").length > 1) return res.status(401).send({error: "Tags should be single word only"})
+        if (str.toLowerCase() !== str) return res.status(401).send({error: "Tags should be lowercase only"})
+      }
       var arr = req.body.tags.split(",").map(item => item.trim());
       arr = arr.filter((e) => {return (e != "")})
       if (req.body.tags)
         subg.tags = arr;
 
       if (!req.body.banned) req.body.banned = "";
+      arr2 = req.body.banned.split(",")
+      for(var i=0; i<arr2.length; i++)
+      {
+        var str = arr2[i].trim()
+        if (str.split(" ").length > 1) return res.status(401).send({error: "Banned Keywords should be single word only"})
+      }
       arr = req.body.banned.split(",").map(item => item.trim());
       arr = arr.filter((e) => {return (e != "")})
       if (req.body.banned)
@@ -281,7 +307,7 @@ app.post("/deletesubgreddiit", middleware, async (req, res) => {
     const uid = await userModel.findOne({_id: req.user.id});
     const subg = await SubGreddiit.findOneAndDelete({mod: uid._id, title: req.body.title})
     
-    if (!subg) return res.status(401).send({error: "No such SubGreddiit"});
+    if (!subg) return res.status(401).send({error: "No such SubGreddiit or no access"});
     for(var i=0; i<subg.posts.length; i++)
     {
       const post = await postModel.findOne({_id: subg.posts[i]})
@@ -304,11 +330,12 @@ app.post("/deletesubgreddiit", middleware, async (req, res) => {
   }
 });
 
-// check
-
 app.post("/subgreddiits/check", middleware, async (req, res) => {
 
   try {
+    const user = await userModel.findOne({_id: req.user.id})
+    if (!user) return res.status(401).send({error: "No such User"});
+
     const check = await SubGreddiit.findOne({title: req.body.title})
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
@@ -321,6 +348,8 @@ app.post("/subgreddiits/check", middleware, async (req, res) => {
     return;
   }
 });
+
+// resume from here
 
 app.post("/subgreddiits/checkjoin", middleware, async (req, res) => {
 
@@ -348,6 +377,8 @@ app.post("/subgreddiits/upvotepost", middleware, async (req, res) => {
     
     if (!post) return res.status(401).send({error: "No such Post"});
     if (!id) return res.status(401).send({error: "No such User"});
+    const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
+    if (!subg.followers.includes(id._id)) return res.status(401).send({error: "No access"})
     
     const index = post.upvotes.indexOf(id._id)
     const index2 = post.downvotes.indexOf(id._id)
@@ -379,6 +410,8 @@ app.post("/subgreddiits/downvotepost", middleware, async (req, res) => {
     
     if (!post) return res.status(401).send({error: "No such Post"});
     if (!id) return res.status(401).send({error: "No such User"});
+    const subg = await SubGreddiit.findOne({_id: post.subgreddiit})
+    if (!subg.followers.includes(id._id)) return res.status(401).send({error: "No access"})
     
     const index = post.upvotes.indexOf(id._id)
     const index2 = post.downvotes.indexOf(id._id)
@@ -410,6 +443,7 @@ app.post("/subgreddiits/createpost", middleware, async (req, res) => {
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
     if (!id) return res.status(401).send({error: "No such User"});
+    if (!check.followers.includes(id._id)) return res.status(401).send({error: "No access"})
     var flag = 0;
     
     const post = new postModel({text: req.body.text, user: id._id, subgreddiit: check._id, upvotes: [id._id], downvotes: []})
@@ -516,6 +550,7 @@ app.post("/subgreddiits/getallposts", middleware, async (req, res) => {
     
     if (!check) return res.status(401).send({error: "No such SubGreddiit"});
     if (!id) return res.status(401).send({error: "No such User"});
+    if (!check.followers.includes(id._id)) return res.status(401).send({error: "No access"})
 
     var p = []
     for(var i=0; i<check.posts.length; i++)
@@ -539,8 +574,11 @@ app.post("/subgreddiits/posts/getcomments", middleware, async (req, res) => {
 
   try {
     const check = await postModel.findOne({_id: req.body.postid})
-    
+    const id = await userModel.findOne({_id: req.user.id})
+
     if (!check) return res.status(401).send({error: "No such Post"});
+    const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+    if (!subg.followers.includes(id._id)) return res.status(401).send({error: "No access"})
 
     var p = []
     for(var i=0; i<check.comments.length; i++)
@@ -568,6 +606,8 @@ app.post("/subgreddiits/posts/addcomment", middleware, async (req, res) => {
     const check = await postModel.findOne({_id: req.body.postid})
     
     if (!check) return res.status(401).send({error: "No such Post"});
+    const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+    if (!subg.followers.includes(user._id)) return res.status(401).send({error: "No access"})
 
     const comment = new commentModel({user: user._id, text: req.body.text, postid: req.body.postid})
     check.comments.push(comment._id)
@@ -589,9 +629,12 @@ app.post("/subgreddiits/posts/addreport", middleware, async (req, res) => {
     const check = await postModel.findOne({_id: req.body.postid})
     
     if (!check) return res.status(401).send({error: "No such Post"});
+    const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+    if (!subg.followers.includes(user._id)) return res.status(401).send({error: "No access"})
 
     const rep = new reportModel({reportedby: user._id, reporteduser: check.user, concern: req.body.text, post: req.body.postid, status: 1})
-    const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
+    rep.date = rep._id.getTimestamp()
+    // const subg = await SubGreddiit.findOne({_id: check.subgreddiit})
     subg.reports.push(rep._id)
 
     await subg.updateOne(subg)
@@ -607,13 +650,15 @@ app.post("/subgreddiits/posts/addreport", middleware, async (req, res) => {
 app.post("/subgreddiits/getreports", middleware, async (req, res) => {
 
   try {
-    const subg = await SubGreddiit.findOne({title: req.body.title})
+    const subg = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
     
-    if (!subg) return res.status(401).send({error: "No such SubGreddiit"});
+    if (!subg) return res.status(401).send({error: "No such SubGreddiit or no access"});
 
     var p = []
+    var del = []
     for(var i=0; i<subg.reports.length; i++)
     {
+      var date = new Date()
       const rep = await reportModel.findOne({_id: subg.reports[i]})
       const repby = await userModel.findOne({_id: rep.reportedby})
       const repuser = await userModel.findOne({_id: rep.reporteduser})
@@ -621,9 +666,23 @@ app.post("/subgreddiits/getreports", middleware, async (req, res) => {
       rep.reporteduser = repuser.uname
       const post = await postModel.findOne({_id: rep.post})
       rep.post = post.text
+      // var diff = (date.getTime() - rep.date.getTime())/60000.0 // for 1 min
+      var diff = (date.getTime() - rep.date.getTime())/(60000.0 * 60 * 24) // days
 
-      p.push(rep)
+      if (diff > 10)
+      {
+        // delete report
+        del.push(rep)
+      }
+      else p.push(rep);
     }
+    for(var i=0; i<del.length; i++)
+    {
+      const index = subg.reports.indexOf(del[i]._id)
+      subg.reports.splice(index, 1)
+      await reportModel.deleteOne({_id: del[i]._id})
+    }
+    await subg.updateOne(subg)
     res.send(p)
   }
   catch (error) {
@@ -709,8 +768,6 @@ app.post("/subgreddiits/reports/deletepost", middleware, async (req, res) => {
 
 app.post("/subgreddiits/reports/blockuser", middleware, async (req, res) => {
 
-  console.log(subg.reporteduser)
-  console.log(subg.mod)
   try {
     const rep = await reportModel.findOne({_id: req.body.reportid})
     if (!rep) return res.status(401).send({error: "No such Report"});
@@ -734,12 +791,12 @@ app.post("/subgreddiits/reports/blockuser", middleware, async (req, res) => {
   }
 });
 
-app.post("/subgreddiits/getusers", async (req, res) => {
+app.post("/subgreddiits/getusers", middleware, async (req, res) => {
 
   try {
-    const users = await SubGreddiit.findOne({title: req.body.title})
+    const users = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
     
-    if (!users) return res.status(401).send({error: "No such SubGreddiit"});
+    if (!users) return res.status(401).send({error: "No such SubGreddiit or no access"});
 
     const l = users.followers.length;
     for(var i = 0; i<l; i++)
@@ -803,7 +860,7 @@ app.post("/subgreddiits/acceptrequest", middleware, async (req, res) => {
   try {
       const subg = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
       if (!subg)
-        return res.status(401).send({error: "SubGreddiit not present!"});
+        return res.status(401).send({error: "SubGreddiit not present or no access!"});
       const id = await userModel.findOne({uname: req.body.uname})
       if (!id)
         return res.status(401).send({error: "User not present!"});
@@ -828,7 +885,7 @@ app.post("/subgreddiits/rejectrequest", middleware, async (req, res) => {
       const subg = await SubGreddiit.findOne({title: req.body.title, mod: req.user.id})
       
       if (!subg)
-        return res.status(401).send({error: "SubGreddiit not present!"});
+        return res.status(401).send({error: "SubGreddiit not present or no access!"});
       const id = await userModel.findOne({uname: req.body.uname})
       if (!id)
         return res.status(401).send({error: "User not present!"});
@@ -845,11 +902,12 @@ app.post("/subgreddiits/rejectrequest", middleware, async (req, res) => {
   }
 });
 
-app.post("/subgreddiits/search", async (req, res) => {
+app.post("/subgreddiits/search", middleware, async (req, res) => {
 
   try {
     const find = await SubGreddiit.find({})
-    const id = await userModel.findOne({uname: req.body.uname})
+    const id = await userModel.findOne({_id: req.user.id})
+    if (!id) return res.status(401).send({error: "No such user"})
     var x = []
     var x1 = []
     for(var i=0; i<find.length; i++)
@@ -882,12 +940,13 @@ app.post("/subgreddiits/search", async (req, res) => {
   }
 });
 
-app.post("/subgreddiits/leave", async (req, res) => {
+app.post("/subgreddiits/leave", middleware, async (req, res) => {
 
   try {
     const find = await SubGreddiit.findOne({title: req.body.title})
-    const id = await userModel.findOne({uname: req.body.uname})
-    
+    const id = await userModel.findOne({_id: req.user.id})
+    if (!id) return res.status(401).send({error: "No such user"})
+
     const index = find.followers.indexOf(id._id);
     find.followers.splice(index, 1);
     const index2 = find.blockedusers.indexOf(id._id);
@@ -895,6 +954,32 @@ app.post("/subgreddiits/leave", async (req, res) => {
     find.left.push(id._id)
     await find.updateOne(find)
     res.send(find)
+  }
+  catch (error) {
+    res.status(500).send(error);
+    return;
+  }
+});
+
+app.get("/subgreddiits/getalltags", middleware, async (req, res) => {
+
+  try {
+    const id = await userModel.findOne({_id: req.user.id})
+    if (!id) return res.status(401).send({error: "No such user"})
+
+    var p = []
+    const subg = await SubGreddiit.find({})
+    for(var i=0; i<subg.length; i++)
+    {
+      for(var j=0; j<subg[i].tags.length; j++)
+      {
+        if (!p.includes(subg[i].tags[j]))
+        {
+          p.push(subg[i].tags[j])
+        }
+      }
+    }
+    res.send(p)
   }
   catch (error) {
     res.status(500).send(error);

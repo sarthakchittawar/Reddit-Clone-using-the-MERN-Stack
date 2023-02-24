@@ -80,7 +80,8 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
                 method: 'POST',
                 body: JSON.stringify({'title': title}),
                 headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'x-auth-token': localStorage.getItem("jwt")
                 }
             })
             const arr = await check.json();
