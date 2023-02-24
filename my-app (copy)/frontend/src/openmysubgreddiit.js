@@ -52,7 +52,7 @@ function OpenMySubGreddiit({loginstatus, setLoginStatus, creds, setCreds, navSta
     let url = window.location.href;
     let parts = url.split("/");
 
-    const title = parts[parts.length - 1];
+    const title = parts[parts.length - 1].split('%20').join(' ');;
 
     const checkSubG = async (title) => {
         try {

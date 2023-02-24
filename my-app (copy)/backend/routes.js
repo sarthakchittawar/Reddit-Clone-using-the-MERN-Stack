@@ -349,8 +349,6 @@ app.post("/subgreddiits/check", middleware, async (req, res) => {
   }
 });
 
-// resume from here
-
 app.post("/subgreddiits/checkjoin", middleware, async (req, res) => {
 
   try {

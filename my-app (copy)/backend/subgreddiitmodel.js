@@ -39,6 +39,9 @@ const SubGreddiitSchema = new mongoose.Schema ({
     date: {
         type: Date,
         required: true
+    },
+    image: {
+        type: String
     }
 });
 // do reports & posts

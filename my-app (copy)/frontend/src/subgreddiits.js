@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Avatar, Button, Card, CardContent, IconButton, MenuItem, OutlinedInput, Radio, TextField, Typography } from "@mui/material";
+import { Alert, Avatar, Button, Card, CardContent, IconButton, InputAdornment, MenuItem, OutlinedInput, Radio, TextField, Typography } from "@mui/material";
 import { Box } from "@mui/system";
 import { useNavigate } from "react-router-dom";
 import logo from './logo.png'
@@ -10,6 +10,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Select from '@mui/material/Select';
 import Chip from '@mui/material/Chip';
+import Fuse from 'fuse.js'
+import SearchIcon from '@mui/icons-material/Search';
 
 function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     
@@ -52,7 +54,6 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
     }
 
     const changeHandler = (val) => {
-        // setValues({...values, [val.target.name]: val.target.value})
         setSearchText(val.target.value)
     }
 
@@ -76,19 +77,43 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
         try {
         const search = await fetch("http://localhost:5000/subgreddiits/search", {
             method: 'POST',
-            body: JSON.stringify({'search': searchtext, 'uname': creds.uname}),
+            body: JSON.stringify({'search': "", 'uname': creds.uname}),
             headers: {
             'Content-Type': 'application/json',
             'x-auth-token': localStorage.getItem("jwt")
             }
         })
-        console.log("search")
         const arr = await search.json();
         if (search.ok){
-            setJoinedList(arr[0])
-            setNotJoinedList(arr[1])
-            setSearchJoinedList(arr[0])
-            setSearchNotJoinedList(arr[1])
+            const fuse1 = new Fuse(arr[0], {
+                keys: ['title']
+            })
+            const res1 = fuse1.search(searchtext)
+            const fuse2 = new Fuse(arr[1], {
+                keys: ['title']
+            })
+            const res2 = fuse2.search(searchtext)
+            
+            var p1 = [], p2 = []
+            for(var i=0; i<res1.length; i++)
+            {
+                p1.push(res1[i].item)
+            }
+            for(i=0; i<res2.length; i++)
+            {
+                p2.push(res2[i].item)
+            }
+
+            if (searchtext === "")
+            {
+                p1 = arr[0]
+                p2 = arr[1]
+            }
+            
+            setJoinedList(p1)
+            setNotJoinedList(p2)
+            setSearchJoinedList(p1)
+            setSearchNotJoinedList(p2)
             setSearchFlag(1)
         }
 
@@ -194,6 +219,10 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             search();
         }
     }, [creds])
+
+    useEffect(() => {
+        search()
+    }, [searchtext])
 
     useEffect(() => {
         if (searchflag === 1)
@@ -439,9 +468,8 @@ function SubGreddiits({loginstatus, setLoginStatus, creds, setCreds}) {
             </Box>
             {/* add stuff here */}
             <Box>
-                <TextField name="searchtext" value={searchtext} type='text' onChange={changeHandler}/>
-                <Button sx={{ml: 1}} variant='contained' onClick={() => search()}>Search</Button>
-                <Select sx={{ml: 5}} multiple value={personName} onChange={handleChange} input={<OutlinedInput/>} renderValue={(s) => (
+                <TextField label='Search' name="searchtext" value={searchtext} type='text' onChange={changeHandler} InputProps={{endAdornment: (<InputAdornment position='end'><SearchIcon/></InputAdornment>)}}/>
+                <Select label="Tags" sx={{ml: 5, width: 200}} multiple value={personName} onChange={handleChange} input={<OutlinedInput/>} renderValue={(s) => (
                     <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
                         {s.map((value) => (
                             <Chip key={value} label={value}/>

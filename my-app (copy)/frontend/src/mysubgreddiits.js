@@ -18,6 +18,8 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
     const [subGreddiitsArray, setSubGreddiitsArray] = useState([]);
     const [errortext, setErrorText] = useState("Error 500");
     const [errorState, setErrorState] = useState(0);
+    const [image, setImage] = useState("")
+    const [imageflag, setImageFlag] = useState(0)
 
     const navigate = useNavigate();
     
@@ -39,6 +41,24 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
         setValues({...values, [val.target.name]: val.target.value})
     }
 
+    const changeimage = async (val) => {
+        if (val.target.files[0].size > 50 * 1024)
+        {
+            setErrorState(2)
+            setErrorText("Image is too big")
+            setImage("")
+            setImageFlag(1)
+        }
+        else
+        {
+            setImageFlag(0)
+            setErrorState(0)
+            setErrorText("")
+            const x = await getBase64(val.target.files[0]);
+            setImage(x)
+        }
+    }
+
     const getCreds = async () => {
         try {
             const checkAuth = await fetch("http://localhost:5000/getcreds", {
@@ -57,7 +77,8 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
 
     const submitForm = async (e) => {
         e.preventDefault();
-        const formvalues = {'title': values.title, 'desc': values.desc, 'mod': creds.uname, 'tags': values.tags, 'banned': values.banned}
+        const formvalues = {'title': values.title, 'desc': values.desc, 'mod': creds.uname, 'tags': values.tags, 'banned': values.banned, 'image': image}
+        console.log(formvalues)
         try {
         const sendValues = await fetch("http://localhost:5000/createsubgreddiit", {
             method: 'POST',
@@ -75,6 +96,7 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
             console.log("SubGreddiit created successfully!");
             setErrorState(1);
             setValues({title: "", desc: "", tags: "", banned: ""})
+            setImage("")
         }
         else {
             console.error("Error in creation of SubGreddiit")
@@ -128,9 +150,24 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
     }
 
     const checkEmpty = () => {
-        if (values.title === "" || values.desc === "") return true;
+        if (values.title === "" || values.desc === "" || imageflag === 1) return true;
         return false;
     }
+
+    const getBase64 = (file) => {
+        return new Promise((res, rej) => {
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+              setImage(reader.result)
+                // res(reader.result)
+            };
+            reader.onerror = (error) => {
+            rej(error)
+            };
+        })
+     }
+     
 
     useEffect(() => {
         if (Array.isArray(subGreddiits))
@@ -160,6 +197,10 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
     useEffect(() => {
         getSubGreddits();
     }, [creds])
+
+    useEffect(() => {
+        console.log(image)
+    }, [image])
 
     return (
         <>
@@ -196,6 +237,9 @@ function MySubGreddiits({loginstatus, setLoginStatus, creds, setCreds, navState,
                         <TextField required multiline maxRows={4} name='desc' label='Description' type='text' value={values.desc} onChange={changeHandler} sx={{ml: 2, width:150}}/>
                         <TextField name='tags' label='Tags' type='text' value={values.tags} onChange={changeHandler} sx={{ml: 2, width:150}}/>
                         <TextField name='banned' label='Banned Keywords' type='text' value={values.banned} onChange={changeHandler} sx={{mt: 2, width:200}}/>
+                        <input type='file' name='image' accept='image/*' onChange={changeimage}/>
+                        <br></br>
+                        <img src={image} alt='SubGreddiit Profile pic'></img>
                         <Button type='submit' variant='contained' disabled={checkEmpty()} onClick={submitForm} name='submitform' sx={{mt: 3, ml: 2}}>Submit</Button>
                         { errorState === 1 ? <Alert onClose={() => {setErrorState(0)}} variant='filled' severity='success' sx={{mt: 2}}>SubGreddiit created successfully!</Alert> : <></> }
                         { errorState === 2 ? <Alert onClose={() => {setErrorState(0)}} variant='filled' severity='error' sx={{mt: 2}}>{errortext}</Alert> : <></> }

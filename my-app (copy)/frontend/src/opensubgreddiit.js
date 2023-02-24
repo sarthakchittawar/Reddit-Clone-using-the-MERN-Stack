@@ -36,6 +36,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     const [reportflag, setReportFlag] = useState(false);
     const [reporttext, setReportText] = useState("")
     const [reportpostid, setReportPostID] = useState("")
+    const [image, setImage] = useState("")
 
     const navigate = useNavigate();
     
@@ -56,7 +57,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
     let url = window.location.href;
     let parts = url.split("/");
 
-    const title = parts[parts.length - 1];
+    const title = parts[parts.length - 1].split('%20').join(' ');
     // console.log(title)
 
     const getCreds = async () => {
@@ -90,7 +91,10 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
             if (!check.ok) navigate("/subgreddiits");
             else{
                 setCurrentSubgG(arr)
-                console.log(arr)
+                // console.log(arr)
+                if (arr.image === undefined || arr.image === "") setImage(subgimage)
+                else setImage(arr.image)
+                // console.log(arr)
             }
     
             } catch (error) {
@@ -462,7 +466,7 @@ function OpenSubGreddiit({loginstatus, setLoginStatus, creds, setCreds}) {
                     <Typography variant="h2" color='black' backgroundColor='orange' sx={{borderRadius: 1, p: 0.5, mt: 1}}>Name: {currentsubg.title}</Typography>
                     <Typography variant="body2" color='black' backgroundColor='orange' sx={{borderRadius: 1, p: 0.5, mt: 1}} style={{whiteSpace: 'break-spaces'}}>Description:<br></br>{currentsubg.desc}</Typography>
                     <Card style={{height: '572px', width: '100%', alignItems: 'center'}} sx={{mt: 1}}>
-                        <CardMedia style={{height: '572px', width: '100%'}} component='img' image={subgimage} alt='DP'/>
+                        <CardMedia style={{height: '572px', width: '100%'}} component='img' image={image} alt='DP'/>
                     </Card>
                 </Box>
                 <Box sx={{display: 'flex', flexDirection: 'column', flexGrow: 1, flexShrink: 1, alignItems: 'center', width: '50%', maxHeight: '710px', overflow: 'auto'}}>
