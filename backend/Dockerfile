@@ -10,4 +10,4 @@ COPY --chown=node:node . .
 
 
 EXPOSE 5000
-ENTRYPOINT [ “npm”, "run", “devStart” ]
+CMD npm run devStart
